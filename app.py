@@ -2,7 +2,7 @@ import openai
 import pyttsx3  # For text-to-speech (Jarvis voice)
 
 # Initialize OpenAI API key
-openai.api_key = "your-api-key"  # Replace with your API key
+openai.api_key = ""  # Replace with your API key
 
 # Initialize text-to-speech engine
 engine = pyttsx3.init()
@@ -32,12 +32,37 @@ def is_creator_question(user_input):
         "who is your owner"
     ]
     return any(phrase in user_input.lower() for phrase in creator_phrases)
-
+def fahim(user_input):
+    fahim = [
+        "Who is Fahim?",  
+        "Do you know who Fahim is?",  
+        "Can you tell me who Fahim is?",  
+        "What does Fahim do?",  
+        "Who is this Fahim guy?",  
+        "Who exactly is Fahim?",  
+        "Could you explain who Fahim is?",  
+        "Who is Fahim, and what does he do?",  
+        "I’ve heard of Fahim, but who is he?",  
+        "Any idea who Fahim is?",  
+        "who is fahim",  
+        "do you know who fahim is",  
+        "can you tell me who fahim is",  
+        "what does fahim do",  
+        "who is this fahim guy",  
+        "who exactly is fahim",  
+        "could you explain who fahim is",  
+        "who is fahim and what does he do",  
+        "i’ve heard of fahim but who is he",  
+        "any idea who fahim is" 
+    ]
+    return any(phrase in user_input.lower() for phrase in fahim)
 # Function to interact with the OpenAI API (GPT-3.5 Turbo)
 def ask_jarvis(user_input):
     # Check if the query asks about Jarvis's creator or boss
     if is_creator_question(user_input):
         response = "My boss is Fahim. Fahim is the one who made me."
+    elif fahim(user_input):
+        response="My boss is Fahim. Fahim is the one who made me."
     else:
         try:
             response = openai.ChatCompletion.create(
