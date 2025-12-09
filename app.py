@@ -1,9 +1,12 @@
 import openai
 import pyttsx3  # For text-to-speech (Jarvis voice)
 import speech_recognition as sr  # For speech recognition
+from dotenv import load_dotenv
+import os
 
-# Initialize OpenAI API key
-openai.api_key = "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"  # Replace with your API key
+load_dotenv()
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # Initialize text-to-speech engine
 engine = pyttsx3.init()
