@@ -1,12 +1,12 @@
 from flask import Flask, render_template, request, jsonify
-from openai import OpenAI
+from groq import Groq
 from dotenv import load_dotenv
 import os
 
 load_dotenv()
 
 app = Flask(__name__)
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 def is_creator_question(user_input):
     creator_phrases = [
@@ -47,7 +47,7 @@ def ask():
     else:
         try:
             response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="llama-3.3-70b-versatile",
                 messages=[
                     {"role": "system", "content": "You are Jarvis, a sleek and helpful AI assistant. Be concise, witty, and professional."},
                     {"role": "user", "content": user_input},
