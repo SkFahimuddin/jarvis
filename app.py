@@ -1,149 +1,64 @@
-import openai
-import pyttsx3  # For text-to-speech (Jarvis voice)
-import speech_recognition as sr  # For speech recognition
+from flask import Flask, render_template, request, jsonify
+from openai import OpenAI
 from dotenv import load_dotenv
 import os
 
 load_dotenv()
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
-
-# Initialize text-to-speech engine
-engine = pyttsx3.init()
-
-# Initialize speech recognizer
-recognizer = sr.Recognizer()
-
-def speak(text):
-    engine.say(text)
-    engine.runAndWait()
+app = Flask(__name__)
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def is_creator_question(user_input):
     creator_phrases = [
-        "who is your boss",
-        "who made you",
-        "who made u",
-        "who created you",
-        "who created u",
-        "who built you",
-        "who built u",
-        "who is responsible for you",
-        "who designed you",
-        "who designed u",
-        "who developed you",
-        "who is your master",
-        "who owns you",
-        "who is your creator",
-        "who is your owner"
+        "who is your boss", "who made you", "who made u", "who created you",
+        "who created u", "who built you", "who built u", "who is responsible for you",
+        "who designed you", "who designed u", "who developed you", "who is your master",
+        "who owns you", "who is your creator", "who is your owner"
     ]
     return any(phrase in user_input.lower() for phrase in creator_phrases)
 
-def fahim(user_input):
+def is_fahim_question(user_input):
     fahim_phrases = [
-        "Who is Fahim?",  
-        "Do you know who Fahim is?",  
-        "Can you tell me who Fahim is?",  
-        "What does Fahim do?",  
-        "Who is this Fahim guy?",  
-        "Who exactly is Fahim?",  
-        "Could you explain who Fahim is?",  
-        "Who is Fahim, and what does he do?",  
-        "I’ve heard of Fahim, but who is he?",  
-        "Any idea who Fahim is?",  
-        "who is fahim",  
-        "do you know who fahim is",  
-        "can you tell me who fahim is",  
-        "what does fahim do",  
-        "who is this fahim guy",  
-        "who exactly is fahim",  
-        "could you explain who fahim is",  
-        "who is fahim and what does he do",  
-        "i’ve heard of fahim but who is he",  
-        "any idea who fahim is" 
-        
-        "Who is Faheem?",  
-        "Do you know who Faheem is?",  
-        "Can you tell me who Faheem is?",  
-        "What does Faheem do?",  
-        "Who is this Faheem guy?",  
-        "Who exactly is Faheem?",  
-        "Could you explain who Faheem is?",  
-        "Who is Faheem, and what does he do?",  
-        "I’ve heard of Faheem, but who is he?",  
-        "Any idea who Faheem is?",  
-        "who is faheem",  
-        "do you know who faheem is",  
-        "can you tell me who faheem is",  
-        "what does faheem do",  
-        "who is this faheem guy",  
-        "who exactly is faheem",  
-        "could you explain who faheem is",  
-        "who is faheem and what does he do",  
-        "i’ve heard of faheem but who is he",  
+        "who is fahim", "do you know who fahim is", "can you tell me who fahim is",
+        "what does fahim do", "who is this fahim guy", "who exactly is fahim",
+        "could you explain who fahim is", "who is fahim and what does he do",
+        "any idea who fahim is", "who is faheem", "do you know who faheem is",
+        "can you tell me who faheem is", "what does faheem do",
+        "who is this faheem guy", "who exactly is faheem",
+        "could you explain who faheem is", "who is faheem and what does he do",
         "any idea who faheem is"
     ]
     return any(phrase in user_input.lower() for phrase in fahim_phrases)
 
-def ask_jarvis(user_input):
-    if is_creator_question(user_input) or fahim(user_input):
-        response = "My boss is Fahim. Fahim is the one who made me."
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+@app.route("/ask", methods=["POST"])
+def ask():
+    data = request.get_json()
+    user_input = data.get("message", "").strip()
+
+    if not user_input:
+        return jsonify({"response": "I didn't catch that. Could you try again?"})
+
+    if is_creator_question(user_input) or is_fahim_question(user_input):
+        response_text = "My boss is Fahim. He is the brilliant mind who created me."
     else:
         try:
-            response = openai.ChatCompletion.create(
+            response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "You are Jarvis, a helpful AI assistant."},
+                    {"role": "system", "content": "You are Jarvis, a sleek and helpful AI assistant. Be concise, witty, and professional."},
                     {"role": "user", "content": user_input},
                 ]
             )
-            response = response['choices'][0]['message']['content']
+            response_text = response.choices[0].message.content
         except Exception as e:
             print("Error:", e)
-            response = "Sorry, I couldn't process that request."
-    
-    print(f"Jarvis: {response}")
-    return response
+            response_text = "Sorry, I encountered an error processing your request."
 
-def get_speech_input():
-    with sr.Microphone() as source:
-        print("Listening...")
-        recognizer.adjust_for_ambient_noise(source)
-        try:
-            audio = recognizer.listen(source)
-            text = recognizer.recognize_google(audio)
-            print(f"You (voice): {text}")
-            return text
-        except sr.UnknownValueError:
-            print("Sorry, I couldn't understand. Please try again.")
-            return ""
-        except sr.RequestError:
-            print("Speech recognition service is unavailable.")
-            return ""
-
-def run_jarvis():
-    mode = input("Choose input mode - 'speak' or 'type': ").strip().lower()
-    while mode not in ["speak", "type"]:
-        mode = input("Invalid choice. Please type 'speak' or 'type': ").strip().lower()
-    
-    speak("Hello, I am Jarvis. How can I assist you today?")
-    
-    while True:
-        if mode == "speak":
-            user_input = get_speech_input()
-            if user_input.lower() in ["exit", "quit"]:
-                speak("Goodbye! Have a great day!")
-                print("Jarvis: Goodbye!")
-                break
-        else:
-            user_input = input("You: ")
-            if user_input.lower() in ["exit", "quit"]:
-                speak("Goodbye! Have a great day!")
-                print("Jarvis: Goodbye!")
-                break
-        
-        if user_input:
-            answer = ask_jarvis(user_input)
-            speak(answer)
+    return jsonify({"response": response_text})
 
 if __name__ == "__main__":
-    run_jarvis()
+    app.run(debug=True)

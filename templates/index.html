@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JARVIS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #020c14;
+      --panel: #040f1a;
+      --cyan: #00e5ff;
+      --cyan-dim: #00b8d4;
+      --amber: #ffab00;
+      --red: #ff1744;
+      --glow: 0 0 20px #00e5ff88, 0 0 60px #00e5ff33;
+      --glow-amber: 0 0 20px #ffab0088;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--cyan);
+      font-family: 'Orbitron', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Scanline overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,229,255,0.015) 2px,
+        rgba(0,229,255,0.015) 4px
+      );
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    /* Radial bg glow */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 40%, #001f3344 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hud-frame {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 50;
+    }
+    .hud-frame::before, .hud-frame::after {
+      content: '';
+      position: absolute;
+      width: 60px; height: 60px;
+      border-color: var(--cyan);
+      border-style: solid;
+      opacity: 0.4;
+    }
+    .hud-frame::before { top: 16px; left: 16px; border-width: 2px 0 0 2px; }
+    .hud-frame::after  { bottom: 16px; right: 16px; border-width: 0 2px 2px 0; }
+
+    /* Corner decorations */
+    .corner { position: fixed; width: 60px; height: 60px; opacity: 0.4; pointer-events: none; z-index: 50; }
+    .corner--tr { top: 16px; right: 16px; border-top: 2px solid var(--cyan); border-right: 2px solid var(--cyan); }
+    .corner--bl { bottom: 16px; left: 16px; border-bottom: 2px solid var(--cyan); border-left: 2px solid var(--cyan); }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+      width: 100%;
+      max-width: 680px;
+      padding: 24px;
+      position: relative;
+      z-index: 10;
+    }
+
+    /* HEADER */
+    .title-block { text-align: center; }
+    .title-block h1 {
+      font-size: clamp(2.2rem, 6vw, 3.5rem);
+      font-weight: 900;
+      letter-spacing: 0.3em;
+      text-shadow: var(--glow);
+      animation: pulse-text 3s ease-in-out infinite;
+    }
+    .title-block .sub {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      opacity: 0.5;
+      margin-top: 4px;
+    }
+    @keyframes pulse-text {
+      0%, 100% { text-shadow: var(--glow); }
+      50% { text-shadow: 0 0 40px #00e5ffbb, 0 0 80px #00e5ff55; }
+    }
+
+    /* STATUS BAR */
+    .status-bar {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      opacity: 0.6;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan);
+      animation: blink 1.5s step-end infinite;
+    }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+    /* FACE */
+    .face {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+      padding: 40px 60px;
+      border: 1px solid rgba(0,229,255,0.15);
+      border-radius: 4px;
+      background: rgba(0,229,255,0.02);
+      width: 100%;
+    }
+    .face::before {
+      content: 'UNIT-01';
+      position: absolute;
+      top: -10px; left: 24px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      color: var(--cyan);
+      background: var(--bg);
+      padding: 0 8px;
+      opacity: 0.5;
+    }
+    .face::after {
+      content: attr(data-status);
+      position: absolute;
+      bottom: -10px; right: 24px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      color: var(--cyan);
+      background: var(--bg);
+      padding: 0 8px;
+      opacity: 0.5;
+    }
+
+    /* EYE */
+    .eye-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .eye {
+      width: 100px;
+      height: 56px;
+      border: 2.5px solid var(--cyan);
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+      background: rgba(0,20,30,0.8);
+      box-shadow: var(--glow), inset 0 0 20px rgba(0,229,255,0.08);
+      transition: box-shadow 0.3s;
+    }
+
+    /* Scan line inside eye */
+    .eye::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 40%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0,229,255,0.15), transparent);
+      animation: eye-scan 4s linear infinite;
+    }
+
+    @keyframes eye-scan {
+      0% { left: -40%; }
+      100% { left: 140%; }
+    }
+
+    .pupil {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 12px var(--cyan), 0 0 30px var(--cyan-dim), inset 0 0 8px rgba(255,255,255,0.3);
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      transition: transform 0.12s ease-out, width 0.2s, height 0.2s, background 0.3s, box-shadow 0.3s;
+      z-index: 2;
+    }
+
+    /* Listening state */
+    .eye.listening {
+      border-color: var(--amber);
+      box-shadow: 0 0 20px #ffab0088, 0 0 60px #ffab0033, inset 0 0 20px rgba(255,171,0,0.08);
+    }
+    .eye.listening .pupil {
+      background: var(--amber);
+      box-shadow: 0 0 16px var(--amber), 0 0 40px #ffab0088;
+      animation: listen-pulse 0.6s ease-in-out infinite alternate;
+    }
+    @keyframes listen-pulse {
+      from { transform: translate(-50%, -50%) scale(1); }
+      to   { transform: translate(-50%, -50%) scale(1.2); }
+    }
+
+    /* Thinking state */
+    .eye.thinking {
+      border-color: #a78bfa;
+      box-shadow: 0 0 20px #a78bfa88, 0 0 60px #a78bfa33;
+    }
+    .eye.thinking .pupil {
+      background: #a78bfa;
+      box-shadow: 0 0 16px #a78bfa, 0 0 40px #a78bfa88;
+      animation: thinking-spin 1s linear infinite;
+    }
+    @keyframes thinking-spin {
+      from { transform: translate(-50%, -50%) rotate(0deg) translateX(12px) rotate(0deg); }
+      to   { transform: translate(-50%, -50%) rotate(360deg) translateX(12px) rotate(-360deg); }
+    }
+
+    /* Speaking state */
+    .eye.speaking {
+      border-color: #00e676;
+      box-shadow: 0 0 20px #00e67688, 0 0 60px #00e67633;
+    }
+    .eye.speaking .pupil {
+      background: #00e676;
+      box-shadow: 0 0 16px #00e676, 0 0 40px #00e67688;
+      animation: speak-bounce 0.3s ease-in-out infinite alternate;
+    }
+    @keyframes speak-bounce {
+      from { transform: translate(-50%, -50%) scaleY(1); }
+      to   { transform: translate(-50%, -50%) scaleY(0.7); }
+    }
+
+    .eye-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.2em;
+      opacity: 0.3;
+    }
+
+    /* NOSE (optional decorative element) */
+    .nose-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .nose-line {
+      width: 2px;
+      height: 20px;
+      background: linear-gradient(to bottom, rgba(0,229,255,0.6), transparent);
+    }
+    .nose-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: rgba(0,229,255,0.3);
+      box-shadow: 0 0 6px var(--cyan);
+    }
+
+    /* WAVEFORM */
+    .waveform {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      height: 32px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .waveform.active { opacity: 1; }
+    .wave-bar {
+      width: 3px;
+      background: var(--cyan);
+      border-radius: 2px;
+      animation: wave-idle 1.5s ease-in-out infinite;
+      box-shadow: 0 0 4px var(--cyan);
+    }
+    .wave-bar:nth-child(1) { animation-delay: 0.0s; }
+    .wave-bar:nth-child(2) { animation-delay: 0.1s; }
+    .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+    .wave-bar:nth-child(4) { animation-delay: 0.3s; }
+    .wave-bar:nth-child(5) { animation-delay: 0.4s; }
+    .wave-bar:nth-child(6) { animation-delay: 0.3s; }
+    .wave-bar:nth-child(7) { animation-delay: 0.2s; }
+    .wave-bar:nth-child(8) { animation-delay: 0.1s; }
+    .wave-bar:nth-child(9) { animation-delay: 0.0s; }
+
+    @keyframes wave-idle {
+      0%, 100% { height: 4px; }
+      50% { height: 28px; }
+    }
+
+    /* CHAT AREA */
+    .chat-area {
+      width: 100%;
+      background: rgba(0,20,30,0.6);
+      border: 1px solid rgba(0,229,255,0.15);
+      border-radius: 4px;
+      padding: 16px;
+      height: 180px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0,229,255,0.3) transparent;
+    }
+    .chat-area::-webkit-scrollbar { width: 4px; }
+    .chat-area::-webkit-scrollbar-track { background: transparent; }
+    .chat-area::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.3); border-radius: 2px; }
+
+    .message {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.78rem;
+      line-height: 1.5;
+      animation: msg-in 0.3s ease-out;
+    }
+    @keyframes msg-in {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .message.user { color: rgba(0,229,255,0.8); }
+    .message.user::before { content: '> YOU: '; opacity: 0.5; }
+    .message.jarvis { color: rgba(255,255,255,0.85); }
+    .message.jarvis::before { content: '> JARVIS: '; color: var(--cyan); opacity: 0.7; }
+    .message.system { color: rgba(0,229,255,0.35); font-size: 0.65rem; text-align: center; letter-spacing: 0.15em; }
+
+    /* INPUT AREA */
+    .input-area {
+      width: 100%;
+      display: flex;
+      gap: 10px;
+    }
+    .text-input {
+      flex: 1;
+      background: rgba(0,20,30,0.8);
+      border: 1px solid rgba(0,229,255,0.25);
+      border-radius: 4px;
+      color: var(--cyan);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.8rem;
+      padding: 12px 16px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      letter-spacing: 0.05em;
+    }
+    .text-input::placeholder { color: rgba(0,229,255,0.25); }
+    .text-input:focus {
+      border-color: rgba(0,229,255,0.6);
+      box-shadow: 0 0 12px rgba(0,229,255,0.15);
+    }
+
+    .btn {
+      border: none;
+      cursor: pointer;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      padding: 12px 18px;
+      border-radius: 4px;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.1);
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .btn:hover::after { opacity: 1; }
+    .btn:active { transform: scale(0.97); }
+
+    .btn-send {
+      background: rgba(0,229,255,0.12);
+      border: 1px solid rgba(0,229,255,0.4);
+      color: var(--cyan);
+    }
+    .btn-send:hover { box-shadow: 0 0 16px rgba(0,229,255,0.3); border-color: var(--cyan); }
+
+    .btn-mic {
+      background: rgba(255,171,0,0.08);
+      border: 1px solid rgba(255,171,0,0.3);
+      color: var(--amber);
+      min-width: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-mic:hover { box-shadow: var(--glow-amber); border-color: var(--amber); }
+    .btn-mic.recording {
+      background: rgba(255,23,68,0.15);
+      border-color: var(--red);
+      color: var(--red);
+      animation: mic-pulse 0.8s ease-in-out infinite alternate;
+    }
+    @keyframes mic-pulse {
+      from { box-shadow: 0 0 6px rgba(255,23,68,0.4); }
+      to   { box-shadow: 0 0 20px rgba(255,23,68,0.8); }
+    }
+
+    .btn-mic svg { width: 18px; height: 18px; }
+
+    /* BOTTOM STATUS */
+    .bottom-info {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      color: rgba(0,229,255,0.3);
+      text-align: center;
+    }
+
+    /* Typing indicator */
+    .typing-dots {
+      display: inline-flex;
+      gap: 3px;
+      align-items: center;
+    }
+    .typing-dots span {
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: var(--cyan);
+      animation: dot-bounce 1.2s ease-in-out infinite;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes dot-bounce {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="hud-frame"></div>
+  <div class="corner corner--tr"></div>
+  <div class="corner corner--bl"></div>
+
+  <div class="container">
+    <div class="title-block">
+      <h1>JARVIS</h1>
+      <p class="sub">JUST A RATHER VERY INTELLIGENT SYSTEM</p>
+    </div>
+
+    <div class="status-bar">
+      <div class="status-dot"></div>
+      <span id="status-text">SYSTEM ONLINE</span>
+    </div>
+
+    <!-- FACE -->
+    <div class="face" data-status="OPTIC v2.1">
+      <div class="eye-wrap">
+        <div class="eye" id="eye-left">
+          <div class="pupil" id="pupil-left"></div>
+        </div>
+        <div class="eye-label">L-OPT</div>
+      </div>
+
+      <div class="nose-area">
+        <div class="nose-line"></div>
+        <div class="nose-dot"></div>
+        <div class="waveform" id="waveform">
+          <div class="wave-bar"></div><div class="wave-bar"></div>
+          <div class="wave-bar"></div><div class="wave-bar"></div>
+          <div class="wave-bar"></div><div class="wave-bar"></div>
+          <div class="wave-bar"></div><div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+        </div>
+      </div>
+
+      <div class="eye-wrap">
+        <div class="eye" id="eye-right">
+          <div class="pupil" id="pupil-right"></div>
+        </div>
+        <div class="eye-label">R-OPT</div>
+      </div>
+    </div>
+
+    <!-- CHAT -->
+    <div class="chat-area" id="chat-area">
+      <div class="message system">— SECURE CHANNEL ESTABLISHED —</div>
+      <div class="message jarvis">Hello. I am Jarvis. How may I assist you today?</div>
+    </div>
+
+    <!-- INPUT -->
+    <div class="input-area">
+      <input type="text" class="text-input" id="text-input" placeholder="ENTER COMMAND..." autocomplete="off" />
+      <button class="btn btn-send" id="send-btn">SEND</button>
+      <button class="btn btn-mic" id="mic-btn" title="Hold to speak">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm6 6c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="bottom-info" id="bottom-info">VOICE RECOGNITION READY · TEXT MODE AVAILABLE</div>
+  </div>
+
+  <script>
+    // ── Eye roaming animation ──────────────────────────────────────────
+    const eyes = ['left', 'right'];
+    const FACE_W = 100, FACE_H = 56, PUPIL = 28;
+    const maxX = (FACE_W - PUPIL) / 2 - 8;
+    const maxY = (FACE_H - PUPIL) / 2 - 6;
+
+    let eyeState = 'idle'; // idle | listening | thinking | speaking
+    let roamInterval;
+
+    function setEyeState(state) {
+      eyeState = state;
+      eyes.forEach(side => {
+        const eye = document.getElementById(`eye-${side}`);
+        eye.classList.remove('listening', 'thinking', 'speaking');
+        if (state !== 'idle') eye.classList.add(state);
+      });
+
+      if (state === 'idle') {
+        startRoaming();
+        document.getElementById('waveform').classList.remove('active');
+      } else {
+        stopRoaming();
+        // Center pupils for non-idle states
+        eyes.forEach(side => {
+          const pupil = document.getElementById(`pupil-${side}`);
+          pupil.style.transform = 'translate(-50%, -50%)';
+        });
+        if (state === 'listening' || state === 'speaking') {
+          document.getElementById('waveform').classList.add('active');
+        } else {
+          document.getElementById('waveform').classList.remove('active');
+        }
+      }
+    }
+
+    function movePupils(x, y) {
+      eyes.forEach(side => {
+        const pupil = document.getElementById(`pupil-${side}`);
+        const clampedX = Math.max(-maxX, Math.min(maxX, x));
+        const clampedY = Math.max(-maxY, Math.min(maxY, y));
+        pupil.style.transform = `translate(calc(-50% + ${clampedX}px), calc(-50% + ${clampedY}px))`;
+      });
+    }
+
+    function startRoaming() {
+      stopRoaming();
+      // Roam to random positions
+      function roamStep() {
+        const x = (Math.random() - 0.5) * maxX * 2;
+        const y = (Math.random() - 0.5) * maxY * 2;
+        movePupils(x, y);
+        const delay = 800 + Math.random() * 2000;
+        roamInterval = setTimeout(roamStep, delay);
+      }
+      roamStep();
+    }
+
+    function stopRoaming() {
+      if (roamInterval) clearTimeout(roamInterval);
+    }
+
+    startRoaming();
+
+    // ── Status helpers ─────────────────────────────────────────────────
+    function setStatus(text) {
+      document.getElementById('status-text').textContent = text;
+    }
+
+    function setBottomInfo(text) {
+      document.getElementById('bottom-info').textContent = text;
+    }
+
+    // ── Chat ───────────────────────────────────────────────────────────
+    const chatArea = document.getElementById('chat-area');
+
+    function addMessage(role, text) {
+      const div = document.createElement('div');
+      div.className = `message ${role}`;
+      div.textContent = text;
+      chatArea.appendChild(div);
+      chatArea.scrollTop = chatArea.scrollHeight;
+      return div;
+    }
+
+    function addTypingIndicator() {
+      const div = document.createElement('div');
+      div.className = 'message jarvis';
+      div.id = 'typing-indicator';
+      div.innerHTML = '<span class="typing-dots"><span></span><span></span><span></span></span>';
+      chatArea.appendChild(div);
+      chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    function removeTypingIndicator() {
+      const el = document.getElementById('typing-indicator');
+      if (el) el.remove();
+    }
+
+    // ── TTS using Web Speech API ────────────────────────────────────────
+    let synth = window.speechSynthesis;
+
+    function speak(text) {
+      if (!synth) return Promise.resolve();
+      return new Promise(resolve => {
+        synth.cancel();
+        const utt = new SpeechSynthesisUtterance(text);
+        utt.rate = 0.95;
+        utt.pitch = 0.85;
+        // Try to pick a deep voice
+        const voices = synth.getVoices();
+        const preferred = voices.find(v => v.name.includes('Google UK English Male'))
+          || voices.find(v => v.name.toLowerCase().includes('male'))
+          || voices[0];
+        if (preferred) utt.voice = preferred;
+
+        utt.onstart = () => {
+          setEyeState('speaking');
+          setStatus('SPEAKING');
+        };
+        utt.onend = () => {
+          setEyeState('idle');
+          setStatus('SYSTEM ONLINE');
+          resolve();
+        };
+        utt.onerror = () => { setEyeState('idle'); resolve(); };
+        synth.speak(utt);
+      });
+    }
+
+    // ── Ask backend ────────────────────────────────────────────────────
+    async function askJarvis(userText) {
+      addMessage('user', userText);
+      setEyeState('thinking');
+      setStatus('PROCESSING');
+      addTypingIndicator();
+
+      try {
+        const res = await fetch('/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: userText })
+        });
+        const data = await res.json();
+        removeTypingIndicator();
+        addMessage('jarvis', data.response);
+        await speak(data.response);
+      } catch (e) {
+        removeTypingIndicator();
+        addMessage('jarvis', 'Connection error. Please try again.');
+        setEyeState('idle');
+        setStatus('ERROR');
+        setTimeout(() => setStatus('SYSTEM ONLINE'), 2000);
+      }
+    }
+
+    // ── Send button ────────────────────────────────────────────────────
+    const textInput = document.getElementById('text-input');
+    const sendBtn = document.getElementById('send-btn');
+
+    function sendText() {
+      const val = textInput.value.trim();
+      if (!val) return;
+      textInput.value = '';
+      askJarvis(val);
+    }
+
+    sendBtn.addEventListener('click', sendText);
+    textInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendText(); });
+
+    // ── Mic button (Web Speech Recognition) ───────────────────────────
+    const micBtn = document.getElementById('mic-btn');
+    let recognition = null;
+    let isRecording = false;
+
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SR();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+
+      recognition.onstart = () => {
+        isRecording = true;
+        micBtn.classList.add('recording');
+        setEyeState('listening');
+        setStatus('LISTENING');
+        setBottomInfo('LISTENING... SPEAK NOW');
+      };
+
+      recognition.onresult = e => {
+        const transcript = e.results[0][0].transcript;
+        textInput.value = transcript;
+        askJarvis(transcript);
+        textInput.value = '';
+      };
+
+      recognition.onerror = e => {
+        console.error('SR error', e.error);
+        setStatus('MIC ERROR');
+        setTimeout(() => setStatus('SYSTEM ONLINE'), 2000);
+      };
+
+      recognition.onend = () => {
+        isRecording = false;
+        micBtn.classList.remove('recording');
+        setBottomInfo('VOICE RECOGNITION READY · TEXT MODE AVAILABLE');
+        if (eyeState === 'listening') setEyeState('idle');
+      };
+
+      micBtn.addEventListener('click', () => {
+        if (isRecording) {
+          recognition.stop();
+        } else {
+          recognition.start();
+        }
+      });
+    } else {
+      micBtn.title = 'Speech recognition not supported in this browser';
+      micBtn.style.opacity = '0.3';
+      micBtn.style.cursor = 'not-allowed';
+      setBottomInfo('VOICE NOT SUPPORTED · USE TEXT MODE');
+    }
+
+    // Load voices on ready
+    if (synth) {
+      synth.onvoiceschanged = () => synth.getVoices();
+    }
+  </script>
+</body>
+</html>
