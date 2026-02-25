@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session
 from groq import Groq
 from dotenv import load_dotenv
 import os
@@ -6,6 +6,7 @@ import os
 load_dotenv()
 
 app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY", "jarvis-secret-key-change-me")
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 def is_creator_question(user_input):
@@ -41,6 +42,7 @@ def is_jasmine_question(user_input):
 
 @app.route("/")
 def index():
+    session.clear()
     return render_template("index.html")
 
 @app.route("/ask", methods=["POST"])
@@ -56,20 +58,34 @@ def ask():
     elif is_jasmine_question(user_input):
         response_text = "Jasmine is a Farishta — an angel — who walked into my boss's life exactly when he needed one most."
     else:
+        if "history" not in session:
+            session["history"] = []
+
+        session["history"].append({"role": "user", "content": user_input})
+
         try:
             response = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=[
                     {"role": "system", "content": "You are Jarvis, a sleek and helpful AI assistant. Be concise, witty, and professional."},
-                    {"role": "user", "content": user_input},
+                    *session["history"]
                 ]
             )
             response_text = response.choices[0].message.content
+
+            session["history"].append({"role": "assistant", "content": response_text})
+            session.modified = True
+
         except Exception as e:
             print("Error:", e)
             response_text = "Sorry, I encountered an error processing your request."
 
     return jsonify({"response": response_text})
+
+@app.route("/reset", methods=["POST"])
+def reset():
+    session.clear()
+    return jsonify({"status": "ok"})
 
 if __name__ == "__main__":
     app.run(debug=True)
