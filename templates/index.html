@@ -15,6 +15,8 @@
       --cyan-dim: #00b8d4;
       --amber: #ffab00;
       --red: #ff1744;
+      --green: #00e676;
+      --purple: #a78bfa;
       --glow: 0 0 20px #00e5ff88, 0 0 60px #00e5ff33;
       --glow-amber: 0 0 20px #ffab0088;
     }
@@ -30,19 +32,14 @@
       justify-content: center;
       overflow: hidden;
     }
-
     body::before {
       content: '';
       position: fixed;
       inset: 0;
-      background: repeating-linear-gradient(
-        0deg, transparent, transparent 2px,
-        rgba(0,229,255,0.015) 2px, rgba(0,229,255,0.015) 4px
-      );
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,229,255,0.015) 2px, rgba(0,229,255,0.015) 4px);
       pointer-events: none;
       z-index: 100;
     }
-
     body::after {
       content: '';
       position: fixed;
@@ -53,19 +50,17 @@
 
     .hud-frame { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
     .hud-frame::before, .hud-frame::after {
-      content: ''; position: absolute;
-      width: 60px; height: 60px;
+      content: ''; position: absolute; width: 60px; height: 60px;
       border-color: var(--cyan); border-style: solid; opacity: 0.4;
     }
     .hud-frame::before { top: 16px; left: 16px; border-width: 2px 0 0 2px; }
     .hud-frame::after  { bottom: 16px; right: 16px; border-width: 0 2px 2px 0; }
-
     .corner { position: fixed; width: 60px; height: 60px; opacity: 0.4; pointer-events: none; z-index: 50; }
     .corner--tr { top: 16px; right: 16px; border-top: 2px solid var(--cyan); border-right: 2px solid var(--cyan); }
     .corner--bl { bottom: 16px; left: 16px; border-bottom: 2px solid var(--cyan); border-left: 2px solid var(--cyan); }
 
-    /* User badge + signout — top right */
-    .user-badge {
+    /* ── Top bar ─────────────────────────────────────────────────────── */
+    .top-bar {
       position: fixed;
       top: 20px;
       right: 90px;
@@ -85,30 +80,36 @@
       background: rgba(0,20,30,0.6);
     }
     .user-name-tag span { color: var(--cyan); font-weight: bold; }
-    .btn-signout {
+    .btn-top {
       font-family: 'Orbitron', sans-serif;
       font-size: 0.55rem;
       font-weight: 700;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.12em;
       padding: 5px 10px;
-      background: rgba(255,23,68,0.08);
-      border: 1px solid rgba(255,23,68,0.3);
       border-radius: 2px;
-      color: var(--red);
       cursor: pointer;
       transition: all 0.2s;
+      border: 1px solid;
     }
-    .btn-signout:hover {
-      background: rgba(255,23,68,0.18);
-      box-shadow: 0 0 10px rgba(255,23,68,0.3);
-      border-color: var(--red);
+    .btn-timeline {
+      background: rgba(167,139,250,0.08);
+      border-color: rgba(167,139,250,0.35);
+      color: var(--purple);
     }
+    .btn-timeline:hover { background: rgba(167,139,250,0.18); box-shadow: 0 0 10px rgba(167,139,250,0.3); border-color: var(--purple); }
+    .btn-signout {
+      background: rgba(255,23,68,0.08);
+      border-color: rgba(255,23,68,0.3);
+      color: var(--red);
+    }
+    .btn-signout:hover { background: rgba(255,23,68,0.18); box-shadow: 0 0 10px rgba(255,23,68,0.3); border-color: var(--red); }
 
+    /* ── Main layout ─────────────────────────────────────────────────── */
     .container {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 32px;
+      gap: 28px;
       width: 100%;
       max-width: 680px;
       padding: 24px;
@@ -152,13 +153,14 @@
     }
     @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
+    /* ── Face ────────────────────────────────────────────────────────── */
     .face {
       position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 40px;
-      padding: 40px 60px;
+      padding: 32px 60px;
       border: 1px solid rgba(0,229,255,0.15);
       border-radius: 4px;
       background: rgba(0,229,255,0.02);
@@ -199,7 +201,6 @@
       animation: eye-scan 4s linear infinite;
     }
     @keyframes eye-scan { 0% { left: -40%; } 100% { left: 140%; } }
-
     .pupil {
       width: 28px; height: 28px; border-radius: 50%;
       background: var(--cyan);
@@ -209,35 +210,51 @@
       transition: transform 0.12s ease-out, width 0.2s, height 0.2s, background 0.3s, box-shadow 0.3s;
       z-index: 2;
     }
-
     .eye.listening { border-color: var(--amber); box-shadow: 0 0 20px #ffab0088, 0 0 60px #ffab0033, inset 0 0 20px rgba(255,171,0,0.08); }
     .eye.listening .pupil { background: var(--amber); box-shadow: 0 0 16px var(--amber), 0 0 40px #ffab0088; animation: listen-pulse 0.6s ease-in-out infinite alternate; }
-    @keyframes listen-pulse { from { transform: translate(-50%, -50%) scale(1); } to { transform: translate(-50%, -50%) scale(1.2); } }
-
-    .eye.thinking { border-color: #a78bfa; box-shadow: 0 0 20px #a78bfa88, 0 0 60px #a78bfa33; }
-    .eye.thinking .pupil { background: #a78bfa; box-shadow: 0 0 16px #a78bfa, 0 0 40px #a78bfa88; animation: thinking-spin 1s linear infinite; }
-    @keyframes thinking-spin { from { transform: translate(-50%, -50%) rotate(0deg) translateX(12px) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg) translateX(12px) rotate(-360deg); } }
-
-    .eye.speaking { border-color: #00e676; box-shadow: 0 0 20px #00e67688, 0 0 60px #00e67633; }
-    .eye.speaking .pupil { background: #00e676; box-shadow: 0 0 16px #00e676, 0 0 40px #00e67688; animation: speak-bounce 0.3s ease-in-out infinite alternate; }
-    @keyframes speak-bounce { from { transform: translate(-50%, -50%) scaleY(1); } to { transform: translate(-50%, -50%) scaleY(0.7); } }
-
+    @keyframes listen-pulse { from { transform: translate(-50%,-50%) scale(1); } to { transform: translate(-50%,-50%) scale(1.2); } }
+    .eye.thinking { border-color: var(--purple); box-shadow: 0 0 20px #a78bfa88, 0 0 60px #a78bfa33; }
+    .eye.thinking .pupil { background: var(--purple); box-shadow: 0 0 16px var(--purple), 0 0 40px #a78bfa88; animation: thinking-spin 1s linear infinite; }
+    @keyframes thinking-spin { from { transform: translate(-50%,-50%) rotate(0deg) translateX(12px) rotate(0deg); } to { transform: translate(-50%,-50%) rotate(360deg) translateX(12px) rotate(-360deg); } }
+    .eye.speaking { border-color: var(--green); box-shadow: 0 0 20px #00e67688, 0 0 60px #00e67633; }
+    .eye.speaking .pupil { background: var(--green); box-shadow: 0 0 16px var(--green), 0 0 40px #00e67688; animation: speak-bounce 0.3s ease-in-out infinite alternate; }
+    @keyframes speak-bounce { from { transform: translate(-50%,-50%) scaleY(1); } to { transform: translate(-50%,-50%) scaleY(0.7); } }
     .eye-label { font-family: 'Share Tech Mono', monospace; font-size: 0.55rem; letter-spacing: 0.2em; opacity: 0.3; }
 
     .nose-area { display: flex; flex-direction: column; align-items: center; gap: 4px; }
     .nose-line { width: 2px; height: 20px; background: linear-gradient(to bottom, rgba(0,229,255,0.6), transparent); }
     .nose-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(0,229,255,0.3); box-shadow: 0 0 6px var(--cyan); }
-
     .waveform { display: flex; align-items: center; gap: 3px; height: 32px; opacity: 0; transition: opacity 0.3s; }
     .waveform.active { opacity: 1; }
     .wave-bar { width: 3px; background: var(--cyan); border-radius: 2px; animation: wave-idle 1.5s ease-in-out infinite; box-shadow: 0 0 4px var(--cyan); }
-    .wave-bar:nth-child(1) { animation-delay: 0.0s; } .wave-bar:nth-child(2) { animation-delay: 0.1s; }
-    .wave-bar:nth-child(3) { animation-delay: 0.2s; } .wave-bar:nth-child(4) { animation-delay: 0.3s; }
-    .wave-bar:nth-child(5) { animation-delay: 0.4s; } .wave-bar:nth-child(6) { animation-delay: 0.3s; }
-    .wave-bar:nth-child(7) { animation-delay: 0.2s; } .wave-bar:nth-child(8) { animation-delay: 0.1s; }
-    .wave-bar:nth-child(9) { animation-delay: 0.0s; }
-    @keyframes wave-idle { 0%, 100% { height: 4px; } 50% { height: 28px; } }
+    .wave-bar:nth-child(1){animation-delay:0.0s} .wave-bar:nth-child(2){animation-delay:0.1s}
+    .wave-bar:nth-child(3){animation-delay:0.2s} .wave-bar:nth-child(4){animation-delay:0.3s}
+    .wave-bar:nth-child(5){animation-delay:0.4s} .wave-bar:nth-child(6){animation-delay:0.3s}
+    .wave-bar:nth-child(7){animation-delay:0.2s} .wave-bar:nth-child(8){animation-delay:0.1s}
+    .wave-bar:nth-child(9){animation-delay:0.0s}
+    @keyframes wave-idle { 0%,100% { height: 4px; } 50% { height: 28px; } }
 
+    /* Moment-logged badge on face */
+    .moment-badge {
+      position: absolute;
+      top: 8px; right: 12px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.1em;
+      color: var(--green);
+      border: 1px solid rgba(0,230,118,0.3);
+      padding: 2px 7px;
+      border-radius: 2px;
+      background: rgba(0,230,118,0.05);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .moment-badge.show { opacity: 1; animation: badge-flash 2s ease-out forwards; }
+    @keyframes badge-flash {
+      0% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; }
+    }
+
+    /* ── Chat area ───────────────────────────────────────────────────── */
     .chat-area {
       width: 100%;
       background: rgba(0,20,30,0.6);
@@ -256,14 +273,17 @@
     .chat-area::-webkit-scrollbar-track { background: transparent; }
     .chat-area::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.3); border-radius: 2px; }
 
-    .message { font-family: 'Share Tech Mono', monospace; font-size: 0.78rem; line-height: 1.5; animation: msg-in 0.3s ease-out; }
+    .message { font-family: 'Share Tech Mono', monospace; font-size: 0.78rem; line-height: 1.6; animation: msg-in 0.3s ease-out; white-space: pre-wrap; }
     @keyframes msg-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
     .message.user { color: rgba(0,229,255,0.8); }
     .message.user::before { content: '> YOU: '; opacity: 0.5; }
     .message.jarvis { color: rgba(255,255,255,0.85); }
     .message.jarvis::before { content: '> JARVIS: '; color: var(--cyan); opacity: 0.7; }
     .message.system { color: rgba(0,229,255,0.35); font-size: 0.65rem; text-align: center; letter-spacing: 0.15em; }
+    .message.timeline-msg { color: rgba(167,139,250,0.9); font-size: 0.72rem; }
+    .message.timeline-msg::before { content: '> JARVIS: '; color: var(--purple); opacity: 0.7; }
 
+    /* ── Input area ──────────────────────────────────────────────────── */
     .input-area { width: 100%; display: flex; gap: 10px; }
     .text-input {
       flex: 1;
@@ -280,7 +300,6 @@
     }
     .text-input::placeholder { color: rgba(0,229,255,0.25); }
     .text-input:focus { border-color: rgba(0,229,255,0.6); box-shadow: 0 0 12px rgba(0,229,255,0.15); }
-
     .btn {
       border: none; cursor: pointer;
       font-family: 'Orbitron', sans-serif;
@@ -294,10 +313,8 @@
     .btn::after { content: ''; position: absolute; inset: 0; background: rgba(255,255,255,0.1); opacity: 0; transition: opacity 0.15s; }
     .btn:hover::after { opacity: 1; }
     .btn:active { transform: scale(0.97); }
-
     .btn-send { background: rgba(0,229,255,0.12); border: 1px solid rgba(0,229,255,0.4); color: var(--cyan); }
     .btn-send:hover { box-shadow: 0 0 16px rgba(0,229,255,0.3); border-color: var(--cyan); }
-
     .btn-mic {
       background: rgba(255,171,0,0.08); border: 1px solid rgba(255,171,0,0.3);
       color: var(--amber); min-width: 52px;
@@ -314,7 +331,223 @@
     .typing-dots span { width: 4px; height: 4px; border-radius: 50%; background: var(--cyan); animation: dot-bounce 1.2s ease-in-out infinite; }
     .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
     .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes dot-bounce { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+    @keyframes dot-bounce { 0%,80%,100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+
+    /* ── Timeline Panel (slide-in from right) ────────────────────────── */
+    .timeline-panel {
+      position: fixed;
+      top: 0; right: -400px;
+      width: 360px;
+      height: 100vh;
+      background: rgba(2, 10, 20, 0.97);
+      border-left: 1px solid rgba(167,139,250,0.25);
+      z-index: 500;
+      display: flex;
+      flex-direction: column;
+      transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(20px);
+    }
+    .timeline-panel.open { right: 0; }
+
+    .tp-header {
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid rgba(167,139,250,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .tp-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      color: var(--purple);
+      text-shadow: 0 0 10px #a78bfa66;
+    }
+    .tp-close {
+      background: none; border: none;
+      color: rgba(167,139,250,0.5); font-size: 1rem;
+      cursor: pointer; transition: color 0.2s;
+      font-family: 'Orbitron', sans-serif;
+      letter-spacing: 0;
+    }
+    .tp-close:hover { color: var(--purple); }
+
+    .tp-filters {
+      padding: 12px 20px;
+      border-bottom: 1px solid rgba(167,139,250,0.1);
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+    .tp-filter-btn {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.15em;
+      padding: 4px 10px;
+      border-radius: 2px;
+      cursor: pointer;
+      border: 1px solid rgba(167,139,250,0.2);
+      background: transparent;
+      color: rgba(167,139,250,0.45);
+      transition: all 0.15s;
+    }
+    .tp-filter-btn.active, .tp-filter-btn:hover {
+      border-color: rgba(167,139,250,0.5);
+      background: rgba(167,139,250,0.08);
+      color: var(--purple);
+    }
+    .tp-filter-btn.active { color: var(--purple); font-weight: bold; }
+
+    .tp-search {
+      padding: 10px 20px;
+      border-bottom: 1px solid rgba(167,139,250,0.1);
+      flex-shrink: 0;
+    }
+    .tp-search input {
+      width: 100%;
+      background: rgba(0,10,20,0.7);
+      border: 1px solid rgba(167,139,250,0.2);
+      border-radius: 3px;
+      color: var(--purple);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.7rem;
+      padding: 8px 12px;
+      outline: none;
+      letter-spacing: 0.05em;
+    }
+    .tp-search input::placeholder { color: rgba(167,139,250,0.25); }
+    .tp-search input:focus { border-color: rgba(167,139,250,0.5); }
+
+    .tp-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(167,139,250,0.3) transparent;
+    }
+    .tp-body::-webkit-scrollbar { width: 3px; }
+    .tp-body::-webkit-scrollbar-thumb { background: rgba(167,139,250,0.3); border-radius: 2px; }
+
+    .tp-empty {
+      text-align: center;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      color: rgba(167,139,250,0.3);
+      margin-top: 60px;
+      line-height: 2;
+    }
+
+    /* Group by date */
+    .tp-date-group { margin-bottom: 20px; }
+    .tp-date-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      color: rgba(167,139,250,0.4);
+      border-bottom: 1px solid rgba(167,139,250,0.12);
+      padding-bottom: 5px;
+      margin-bottom: 10px;
+    }
+
+    .moment-card {
+      background: rgba(167,139,250,0.04);
+      border: 1px solid rgba(167,139,250,0.12);
+      border-left: 3px solid rgba(167,139,250,0.4);
+      border-radius: 3px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      animation: card-in 0.25s ease-out;
+      transition: border-color 0.15s;
+    }
+    .moment-card:hover { border-color: rgba(167,139,250,0.5); background: rgba(167,139,250,0.07); }
+    @keyframes card-in { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: translateX(0); } }
+
+    .mc-time {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--purple);
+      letter-spacing: 0.1em;
+      margin-bottom: 5px;
+      opacity: 0.8;
+    }
+    .mc-row {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem;
+      color: rgba(255,255,255,0.7);
+      letter-spacing: 0.04em;
+      line-height: 1.6;
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+    }
+    .mc-icon { opacity: 0.6; font-size: 0.7rem; }
+    .mc-mood-tag {
+      display: inline-block;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.55rem;
+      padding: 1px 6px;
+      border-radius: 10px;
+      border: 1px solid rgba(0,230,118,0.3);
+      color: var(--green);
+      background: rgba(0,230,118,0.05);
+      margin-top: 3px;
+      letter-spacing: 0.08em;
+    }
+
+    .tp-footer {
+      padding: 12px 20px;
+      border-top: 1px solid rgba(167,139,250,0.1);
+      flex-shrink: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .tp-count {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.15em;
+      color: rgba(167,139,250,0.4);
+    }
+    .tp-clear-btn {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.5rem;
+      letter-spacing: 0.12em;
+      padding: 4px 8px;
+      background: rgba(255,23,68,0.06);
+      border: 1px solid rgba(255,23,68,0.2);
+      border-radius: 2px;
+      color: rgba(255,23,68,0.5);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tp-clear-btn:hover { color: var(--red); border-color: rgba(255,23,68,0.4); background: rgba(255,23,68,0.1); }
+
+    /* Overlay when panel open */
+    .panel-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+      z-index: 499; opacity: 0; pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .panel-overlay.show { opacity: 1; pointer-events: all; }
+
+    /* Log hint bar */
+    .log-hint {
+      width: 100%;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      color: rgba(0,229,255,0.25);
+      text-align: center;
+      padding: 4px;
+      border: 1px dashed rgba(0,229,255,0.1);
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .log-hint:hover { color: rgba(0,229,255,0.5); border-color: rgba(0,229,255,0.2); }
   </style>
 </head>
 <body>
@@ -322,10 +555,38 @@
   <div class="corner corner--tr"></div>
   <div class="corner corner--bl"></div>
 
-  <!-- User badge + signout -->
-  <div class="user-badge">
+  <!-- Top bar -->
+  <div class="top-bar">
     <div class="user-name-tag">USER: <span id="display-username">{{ username | upper }}</span></div>
-    <button class="btn-signout" onclick="doSignout()">SIGN OUT</button>
+    <button class="btn-top btn-timeline" onclick="openTimeline()">📅 TIMELINE</button>
+    <button class="btn-top btn-signout" onclick="doSignout()">SIGN OUT</button>
+  </div>
+
+  <!-- Timeline Panel Overlay -->
+  <div class="panel-overlay" id="panel-overlay" onclick="closeTimeline()"></div>
+
+  <!-- Timeline Panel -->
+  <div class="timeline-panel" id="timeline-panel">
+    <div class="tp-header">
+      <div class="tp-title">⏱ LIFE LOG</div>
+      <button class="tp-close" onclick="closeTimeline()">✕</button>
+    </div>
+    <div class="tp-filters">
+      <button class="tp-filter-btn active" onclick="setFilter('all', this)">ALL</button>
+      <button class="tp-filter-btn" onclick="setFilter('today', this)">TODAY</button>
+      <button class="tp-filter-btn" onclick="setFilter('yesterday', this)">YESTERDAY</button>
+      <button class="tp-filter-btn" onclick="setFilter('week', this)">THIS WEEK</button>
+    </div>
+    <div class="tp-search">
+      <input type="text" id="tp-search-input" placeholder="Search moments..." oninput="renderMoments()" />
+    </div>
+    <div class="tp-body" id="tp-body">
+      <div class="tp-empty">NO MOMENTS LOGGED YET<br/>— — —<br/>JUST TALK NATURALLY OR USE:<br/>LOG: [WHAT YOU'RE DOING]</div>
+    </div>
+    <div class="tp-footer">
+      <div class="tp-count" id="tp-count">0 MOMENTS</div>
+      <button class="tp-clear-btn" onclick="clearMoments()">CLEAR ALL</button>
+    </div>
   </div>
 
   <div class="container">
@@ -339,13 +600,13 @@
       <span id="status-text">SYSTEM ONLINE</span>
     </div>
 
-    <!-- FACE -->
+    <!-- Face -->
     <div class="face" data-status="OPTIC v2.1">
+      <div class="moment-badge" id="moment-badge">📍 LOGGED</div>
       <div class="eye-wrap">
         <div class="eye" id="eye-left"><div class="pupil" id="pupil-left"></div></div>
         <div class="eye-label">L-OPT</div>
       </div>
-
       <div class="nose-area">
         <div class="nose-line"></div>
         <div class="nose-dot"></div>
@@ -357,21 +618,20 @@
           <div class="wave-bar"></div>
         </div>
       </div>
-
       <div class="eye-wrap">
         <div class="eye" id="eye-right"><div class="pupil" id="pupil-right"></div></div>
         <div class="eye-label">R-OPT</div>
       </div>
     </div>
 
-    <!-- CHAT -->
+    <!-- Chat -->
     <div class="chat-area" id="chat-area">
       <div class="message system">— SECURE CHANNEL ESTABLISHED —</div>
     </div>
 
-    <!-- INPUT -->
+    <!-- Input -->
     <div class="input-area">
-      <input type="text" class="text-input" id="text-input" placeholder="ENTER COMMAND..." autocomplete="off" />
+      <input type="text" class="text-input" id="text-input" placeholder="ENTER COMMAND  ·  OR:  log: at the gym" autocomplete="off" />
       <button class="btn btn-send" id="send-btn">SEND</button>
       <button class="btn btn-mic" id="mic-btn" title="Click to speak">
         <svg viewBox="0 0 24 24" fill="currentColor">
@@ -380,30 +640,32 @@
       </button>
     </div>
 
-    <div class="bottom-info" id="bottom-info">VOICE RECOGNITION READY · TEXT MODE AVAILABLE</div>
+    <div class="log-hint" onclick="document.getElementById('text-input').value='log: '; document.getElementById('text-input').focus();">
+      💡 TIP: Say something naturally OR type  "log: [activity]"  to log a moment  ·  Ask "where was I at 2pm yesterday?" to query
+    </div>
+
+    <div class="bottom-info" id="bottom-info">VOICE RECOGNITION READY · TEXT MODE AVAILABLE · MOMENT TRACKING ACTIVE</div>
   </div>
 
   <script>
-    // Username from server
     const USERNAME = "{{ username }}";
 
-    // ── Signout ───────────────────────────────────────────────────────
+    // ── Signout ──────────────────────────────────────────────────────
     async function doSignout() {
       await fetch('/logout', { method: 'POST' });
       window.location.href = '/login';
     }
 
-    // ── Eye roaming ────────────────────────────────────────────────────
-    const eyes = ['left', 'right'];
+    // ── Eye roaming ──────────────────────────────────────────────────
+    const eyeSides = ['left', 'right'];
     const FACE_W = 100, FACE_H = 56, PUPIL = 28;
     const maxX = (FACE_W - PUPIL) / 2 - 8;
     const maxY = (FACE_H - PUPIL) / 2 - 6;
-    let eyeState = 'idle';
-    let roamInterval;
+    let eyeState = 'idle', roamInterval;
 
     function setEyeState(state) {
       eyeState = state;
-      eyes.forEach(side => {
+      eyeSides.forEach(side => {
         const eye = document.getElementById(`eye-${side}`);
         eye.classList.remove('listening', 'thinking', 'speaking');
         if (state !== 'idle') eye.classList.add(state);
@@ -413,73 +675,71 @@
         document.getElementById('waveform').classList.remove('active');
       } else {
         stopRoaming();
-        eyes.forEach(side => {
+        eyeSides.forEach(side => {
           document.getElementById(`pupil-${side}`).style.transform = 'translate(-50%, -50%)';
         });
-        if (state === 'listening' || state === 'speaking') {
-          document.getElementById('waveform').classList.add('active');
-        } else {
-          document.getElementById('waveform').classList.remove('active');
-        }
+        if (state === 'listening' || state === 'speaking') document.getElementById('waveform').classList.add('active');
+        else document.getElementById('waveform').classList.remove('active');
       }
     }
 
     function movePupils(x, y) {
-      eyes.forEach(side => {
-        const pupil = document.getElementById(`pupil-${side}`);
-        const clampedX = Math.max(-maxX, Math.min(maxX, x));
-        const clampedY = Math.max(-maxY, Math.min(maxY, y));
-        pupil.style.transform = `translate(calc(-50% + ${clampedX}px), calc(-50% + ${clampedY}px))`;
+      eyeSides.forEach(side => {
+        const p = document.getElementById(`pupil-${side}`);
+        p.style.transform = `translate(calc(-50% + ${Math.max(-maxX, Math.min(maxX, x))}px), calc(-50% + ${Math.max(-maxY, Math.min(maxY, y))}px))`;
       });
     }
 
     function startRoaming() {
       stopRoaming();
-      function roamStep() {
-        const x = (Math.random() - 0.5) * maxX * 2;
-        const y = (Math.random() - 0.5) * maxY * 2;
-        movePupils(x, y);
-        roamInterval = setTimeout(roamStep, 800 + Math.random() * 2000);
+      function step() {
+        movePupils((Math.random()-.5)*maxX*2, (Math.random()-.5)*maxY*2);
+        roamInterval = setTimeout(step, 800 + Math.random()*2000);
       }
-      roamStep();
+      step();
     }
     function stopRoaming() { if (roamInterval) clearTimeout(roamInterval); }
     startRoaming();
 
-    function setStatus(text) { document.getElementById('status-text').textContent = text; }
-    function setBottomInfo(text) { document.getElementById('bottom-info').textContent = text; }
+    function setStatus(t) { document.getElementById('status-text').textContent = t; }
+    function setBottomInfo(t) { document.getElementById('bottom-info').textContent = t; }
 
-    // ── Chat ───────────────────────────────────────────────────────────
+    // ── Moment badge flash ───────────────────────────────────────────
+    function flashMomentBadge() {
+      const b = document.getElementById('moment-badge');
+      b.classList.remove('show');
+      void b.offsetWidth;
+      b.classList.add('show');
+      setTimeout(() => b.classList.remove('show'), 2200);
+    }
+
+    // ── Chat ─────────────────────────────────────────────────────────
     const chatArea = document.getElementById('chat-area');
 
-    function addMessage(role, text) {
+    function addMessage(role, text, isTimeline = false) {
       const div = document.createElement('div');
-      div.className = `message ${role}`;
+      div.className = isTimeline ? 'message timeline-msg' : `message ${role}`;
       div.textContent = text;
       chatArea.appendChild(div);
       chatArea.scrollTop = chatArea.scrollHeight;
-      return div;
     }
 
     function addTypingIndicator() {
       const div = document.createElement('div');
-      div.className = 'message jarvis';
-      div.id = 'typing-indicator';
+      div.className = 'message jarvis'; div.id = 'typing-indicator';
       div.innerHTML = '<span class="typing-dots"><span></span><span></span><span></span></span>';
       chatArea.appendChild(div);
       chatArea.scrollTop = chatArea.scrollHeight;
     }
+    function removeTypingIndicator() { const el = document.getElementById('typing-indicator'); if (el) el.remove(); }
 
-    function removeTypingIndicator() {
-      const el = document.getElementById('typing-indicator');
-      if (el) el.remove();
-    }
-
-    // ── TTS ────────────────────────────────────────────────────────────
-    let synth = window.speechSynthesis;
+    // ── TTS ──────────────────────────────────────────────────────────
+    const synth = window.speechSynthesis;
 
     function speak(text) {
       if (!synth) return Promise.resolve();
+      // Don't speak long timeline outputs
+      if (text.length > 300) return Promise.resolve();
       return new Promise(resolve => {
         synth.cancel();
         const utt = new SpeechSynthesisUtterance(text);
@@ -488,32 +748,32 @@
         const preferred = voices.find(v => v.name.includes('Google UK English Male'))
           || voices.find(v => v.name.toLowerCase().includes('male')) || voices[0];
         if (preferred) utt.voice = preferred;
-        utt.onstart = () => { setEyeState('speaking'); setStatus('SPEAKING'); };
-        utt.onend = () => { setEyeState('idle'); setStatus('SYSTEM ONLINE'); resolve(); };
-        utt.onerror = () => { setEyeState('idle'); resolve(); };
+        utt.onstart  = () => { setEyeState('speaking'); setStatus('SPEAKING'); };
+        utt.onend    = () => { setEyeState('idle'); setStatus('SYSTEM ONLINE'); resolve(); };
+        utt.onerror  = () => { setEyeState('idle'); resolve(); };
         synth.speak(utt);
       });
     }
 
-    // ── Ask backend ────────────────────────────────────────────────────
+    // ── Ask backend ──────────────────────────────────────────────────
     async function askJarvis(userText) {
       addMessage('user', userText);
-      setEyeState('thinking');
-      setStatus('PROCESSING');
+      setEyeState('thinking'); setStatus('PROCESSING');
       addTypingIndicator();
-
       try {
         const res = await fetch('/ask', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: userText })
         });
-        if (res.status === 401 || res.redirected) {
-          window.location.href = '/login'; return;
-        }
+        if (res.status === 401 || res.redirected) { window.location.href = '/login'; return; }
         const data = await res.json();
         removeTypingIndicator();
-        addMessage('jarvis', data.response);
+        addMessage('jarvis', data.response, !!data.is_timeline);
+        if (data.moment_logged) {
+          flashMomentBadge();
+          loadMoments(); // refresh panel
+        }
         await speak(data.response);
       } catch (e) {
         removeTypingIndicator();
@@ -523,75 +783,135 @@
       }
     }
 
-    // ── Send ───────────────────────────────────────────────────────────
+    // ── Send ─────────────────────────────────────────────────────────
     const textInput = document.getElementById('text-input');
-    const sendBtn = document.getElementById('send-btn');
+    document.getElementById('send-btn').addEventListener('click', () => {
+      const val = textInput.value.trim(); if (!val) return;
+      textInput.value = ''; askJarvis(val);
+    });
+    textInput.addEventListener('keydown', e => { if (e.key === 'Enter') { const val = textInput.value.trim(); if (!val) return; textInput.value = ''; askJarvis(val); } });
 
-    function sendText() {
-      const val = textInput.value.trim();
-      if (!val) return;
-      textInput.value = '';
-      askJarvis(val);
-    }
-
-    sendBtn.addEventListener('click', sendText);
-    textInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendText(); });
-
-    // ── Mic ────────────────────────────────────────────────────────────
+    // ── Mic ──────────────────────────────────────────────────────────
     const micBtn = document.getElementById('mic-btn');
     let recognition = null, isRecording = false;
-
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognition = new SR();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = 'en-US';
-
-      recognition.onstart = () => {
-        isRecording = true; micBtn.classList.add('recording');
-        setEyeState('listening'); setStatus('LISTENING');
-        setBottomInfo('LISTENING... SPEAK NOW');
-      };
-      recognition.onresult = e => {
-        const transcript = e.results[0][0].transcript;
-        askJarvis(transcript);
-      };
-      recognition.onerror = e => {
-        console.error('SR error', e.error);
-        setStatus('MIC ERROR');
-        setTimeout(() => setStatus('SYSTEM ONLINE'), 2000);
-      };
-      recognition.onend = () => {
-        isRecording = false; micBtn.classList.remove('recording');
-        setBottomInfo('VOICE RECOGNITION READY · TEXT MODE AVAILABLE');
-        if (eyeState === 'listening') setEyeState('idle');
-      };
-      micBtn.addEventListener('click', () => {
-        if (isRecording) recognition.stop(); else recognition.start();
-      });
+      recognition.continuous = false; recognition.interimResults = false; recognition.lang = 'en-US';
+      recognition.onstart = () => { isRecording = true; micBtn.classList.add('recording'); setEyeState('listening'); setStatus('LISTENING'); setBottomInfo('LISTENING... SPEAK NOW'); };
+      recognition.onresult = e => { askJarvis(e.results[0][0].transcript); };
+      recognition.onerror = e => { setStatus('MIC ERROR'); setTimeout(() => setStatus('SYSTEM ONLINE'), 2000); };
+      recognition.onend = () => { isRecording = false; micBtn.classList.remove('recording'); setBottomInfo('VOICE RECOGNITION READY · TEXT MODE AVAILABLE · MOMENT TRACKING ACTIVE'); if (eyeState === 'listening') setEyeState('idle'); };
+      micBtn.addEventListener('click', () => { if (isRecording) recognition.stop(); else recognition.start(); });
     } else {
-      micBtn.title = 'Speech recognition not supported';
       micBtn.style.opacity = '0.3'; micBtn.style.cursor = 'not-allowed';
-      setBottomInfo('VOICE NOT SUPPORTED · USE TEXT MODE');
     }
-
     if (synth) synth.onvoiceschanged = () => synth.getVoices();
 
-    // ── Greeting on load ───────────────────────────────────────────────
+    // ── Timeline Panel ───────────────────────────────────────────────
+    let allMoments = [];
+    let activeFilter = 'all';
+
+    async function loadMoments() {
+      try {
+        const res = await fetch('/moments');
+        const data = await res.json();
+        allMoments = data.moments || [];
+        renderMoments();
+      } catch (e) { console.error('Moments load error', e); }
+    }
+
+    function openTimeline() {
+      loadMoments();
+      document.getElementById('timeline-panel').classList.add('open');
+      document.getElementById('panel-overlay').classList.add('show');
+    }
+    function closeTimeline() {
+      document.getElementById('timeline-panel').classList.remove('open');
+      document.getElementById('panel-overlay').classList.remove('show');
+    }
+
+    function setFilter(filter, btn) {
+      activeFilter = filter;
+      document.querySelectorAll('.tp-filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderMoments();
+    }
+
+    function renderMoments() {
+      const search = (document.getElementById('tp-search-input').value || '').toLowerCase();
+      const now = new Date();
+      const todayStr = now.toDateString();
+      const yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toDateString();
+      const weekAgo = new Date(now); weekAgo.setDate(weekAgo.getDate() - 7);
+
+      let filtered = allMoments.filter(m => {
+        const dt = new Date(m.timestamp);
+        if (activeFilter === 'today' && dt.toDateString() !== todayStr) return false;
+        if (activeFilter === 'yesterday' && dt.toDateString() !== yesterdayStr) return false;
+        if (activeFilter === 'week' && dt < weekAgo) return false;
+        if (search) {
+          const combined = [m.activity, m.location, m.mood, m.note].filter(Boolean).join(' ').toLowerCase();
+          if (!combined.includes(search)) return false;
+        }
+        return true;
+      });
+
+      const body = document.getElementById('tp-body');
+      document.getElementById('tp-count').textContent = `${filtered.length} MOMENT${filtered.length !== 1 ? 'S' : ''}`;
+
+      if (filtered.length === 0) {
+        body.innerHTML = `<div class="tp-empty">NO MOMENTS FOUND<br/>— — —<br/>TRY A DIFFERENT FILTER</div>`;
+        return;
+      }
+
+      // Group by date
+      const groups = {};
+      filtered.forEach(m => {
+        const key = m.date || 'Unknown';
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(m);
+      });
+
+      body.innerHTML = '';
+      Object.entries(groups).forEach(([date, moments]) => {
+        const grp = document.createElement('div');
+        grp.className = 'tp-date-group';
+        grp.innerHTML = `<div class="tp-date-label">▸ ${date}</div>`;
+        moments.forEach(m => {
+          const card = document.createElement('div');
+          card.className = 'moment-card';
+          let html = `<div class="mc-time">🕐 ${m.time || '—'}</div>`;
+          if (m.activity) html += `<div class="mc-row"><span class="mc-icon">⚡</span><span>${m.activity}</span></div>`;
+          if (m.location) html += `<div class="mc-row"><span class="mc-icon">📍</span><span>${m.location}</span></div>`;
+          if (m.note)     html += `<div class="mc-row"><span class="mc-icon">📝</span><span>${m.note}</span></div>`;
+          if (m.mood)     html += `<div><span class="mc-mood-tag">${m.mood}</span></div>`;
+          card.innerHTML = html;
+          grp.appendChild(card);
+        });
+        body.appendChild(grp);
+      });
+    }
+
+    async function clearMoments() {
+      if (!confirm('Clear all logged moments? This cannot be undone.')) return;
+      await fetch('/moments/clear', { method: 'POST' });
+      allMoments = [];
+      renderMoments();
+    }
+
+    // ── Greeting ─────────────────────────────────────────────────────
     window.addEventListener('load', () => {
+      loadMoments();
       const greetings = [
-        `Hello, ${USERNAME}. All systems are online and ready. How may I assist you today?`,
-        `Good to see you again, ${USERNAME}. I'm fully operational. What can I do for you?`,
-        `Welcome back, ${USERNAME}. JARVIS at your service. What do you need?`,
-        `Online and ready, ${USERNAME}. How can I help you today?`
+        `Hello, ${USERNAME}. All systems online. Moment tracking is active.`,
+        `Good to see you again, ${USERNAME}. I'm ready. Moment logging is on.`,
+        `Welcome back, ${USERNAME}. JARVIS at your service.`,
+        `Online and ready, ${USERNAME}. What can I do for you today?`
       ];
       const greeting = greetings[Math.floor(Math.random() * greetings.length)];
-
-      setTimeout(() => {
-        addMessage('jarvis', greeting);
-        speak(greeting);
-      }, 600);
+      setTimeout(() => { addMessage('jarvis', greeting); speak(greeting); }, 600);
     });
   </script>
 </body>
