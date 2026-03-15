@@ -1,5 +1,4 @@
-from flask import Flask, request, jsonify, session
-from flask_cors import CORS
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from groq import Groq
 from dotenv import load_dotenv
 import os
@@ -14,11 +13,6 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "jarvis-secret-key-change-me")
-
-# ── CORS: allow your Render static site to call this API ──────────────────────
-FRONTEND_URL = os.getenv("FRONTEND_URL", "*")  # Set this in Render env vars
-CORS(app, supports_credentials=True, origins=[FRONTEND_URL] if FRONTEND_URL != "*" else "*")
-
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 # ── Database setup ─────────────────────────────────────────────────────────────
@@ -128,7 +122,7 @@ def get_moments_in_range(user_id, start_dt, end_dt):
     conn.close()
     return rows
 
-def get_all_moments(user_id, limit=200):
+def get_all_moments(user_id, limit=100):
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute(
@@ -153,7 +147,7 @@ def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         if 'user_id' not in session:
-            return jsonify({"error": "Unauthorized"}), 401
+            return redirect(url_for('login_page'))
         return f(*args, **kwargs)
     return decorated
 
@@ -201,6 +195,7 @@ def is_delete_memory_request(user_input):
     return any(phrase in user_input.lower() for phrase in delete_phrases)
 
 def is_timeline_query(user_input):
+    """Detect if the user is asking about their past moments/location/activity."""
     query_phrases = [
         "where was i", "what was i doing", "what did i do", "where were you",
         "what happened at", "show my timeline", "show timeline", "my timeline",
@@ -214,10 +209,12 @@ def is_timeline_query(user_input):
     return any(phrase in user_input.lower() for phrase in query_phrases)
 
 def is_explicit_log(user_input):
+    """Detect explicit log commands like 'log: at the gym'"""
     return user_input.lower().startswith("log:") or user_input.lower().startswith("log ")
 
 # ── AI moment extractor ────────────────────────────────────────────────────────
 def extract_moment_from_text(text, current_time_str):
+    """Use Groq to extract moment data from natural text."""
     prompt = f"""You are a data extractor. Given a user's message, extract life-log moment details.
 Current time: {current_time_str}
 
@@ -231,6 +228,7 @@ Extract and return ONLY a valid JSON object with these fields (use null if not m
 User message: "{text}"
 
 Return ONLY the JSON object, no explanation, no markdown."""
+
     try:
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
@@ -239,17 +237,23 @@ Return ONLY the JSON object, no explanation, no markdown."""
             temperature=0.1
         )
         raw = response.choices[0].message.content.strip()
+        # Strip markdown if present
         raw = re.sub(r'^```json\s*', '', raw)
         raw = re.sub(r'\s*```$', '', raw)
-        return json.loads(raw)
+        data = json.loads(raw)
+        return data
     except Exception as e:
         print("Moment extraction error:", e)
         return None
 
 # ── Timeline query parser ──────────────────────────────────────────────────────
 def parse_timeline_query(user_input, now):
+    """Parse what time range the user is asking about."""
     text = user_input.lower()
+
+    # Specific time mentions like "2pm yesterday", "at 3pm today"
     time_pattern = re.search(r'(\d{1,2})(?::(\d{2}))?\s*(am|pm)', text)
+    
     today = now.date()
     yesterday = today - timedelta(days=1)
 
@@ -260,7 +264,7 @@ def parse_timeline_query(user_input, now):
     elif "last night" in text:
         base_date = yesterday
     else:
-        base_date = today
+        base_date = today  # default to today
 
     if time_pattern:
         hour = int(time_pattern.group(1))
@@ -271,21 +275,34 @@ def parse_timeline_query(user_input, now):
         elif period == 'am' and hour == 12:
             hour = 0
         point_time = datetime.combine(base_date, datetime.min.time().replace(hour=hour, minute=minute))
+        # Return a 2-hour window around that time
         return point_time - timedelta(hours=1), point_time + timedelta(hours=1), f"around {time_pattern.group(0)}"
     elif "morning" in text:
-        return datetime.combine(base_date, datetime.min.time().replace(hour=5)), datetime.combine(base_date, datetime.min.time().replace(hour=12)), "the morning"
+        start = datetime.combine(base_date, datetime.min.time().replace(hour=5))
+        end = datetime.combine(base_date, datetime.min.time().replace(hour=12))
+        return start, end, "the morning"
     elif "afternoon" in text:
-        return datetime.combine(base_date, datetime.min.time().replace(hour=12)), datetime.combine(base_date, datetime.min.time().replace(hour=18)), "the afternoon"
+        start = datetime.combine(base_date, datetime.min.time().replace(hour=12))
+        end = datetime.combine(base_date, datetime.min.time().replace(hour=18))
+        return start, end, "the afternoon"
     elif "evening" in text or "night" in text:
-        return datetime.combine(base_date, datetime.min.time().replace(hour=18)), datetime.combine(base_date, datetime.min.time().replace(hour=23, minute=59)), "the evening"
+        start = datetime.combine(base_date, datetime.min.time().replace(hour=18))
+        end = datetime.combine(base_date, datetime.min.time().replace(hour=23, minute=59))
+        return start, end, "the evening"
     else:
+        # Full day
+        start = datetime.combine(base_date, datetime.min.time())
+        end = datetime.combine(base_date, datetime.min.time().replace(hour=23, minute=59, second=59))
         label = "yesterday" if base_date == yesterday else "today"
-        return datetime.combine(base_date, datetime.min.time()), datetime.combine(base_date, datetime.min.time().replace(hour=23, minute=59, second=59)), label
+        return start, end, label
 
 def format_moments_timeline(rows, period_label):
+    """Format moments as a structured timeline string for JARVIS to return."""
     if not rows:
         return f"No moments logged for {period_label}."
-    lines = [f"📅 TIMELINE — {period_label.upper()}", "─" * 36]
+    
+    lines = [f"📅 TIMELINE — {period_label.upper()}"]
+    lines.append("─" * 36)
     for row in rows:
         ts, activity, location, mood, note = row
         try:
@@ -293,16 +310,34 @@ def format_moments_timeline(rows, period_label):
             time_str = dt.strftime("%I:%M %p")
         except:
             time_str = ts
+
         parts = [f"🕐 {time_str}"]
-        if activity: parts.append(f"  ▸ {activity}")
-        if location: parts.append(f"  📍 {location}")
-        if mood:     parts.append(f"  💭 Mood: {mood}")
-        if note:     parts.append(f"  📝 {note}")
+        if activity:
+            parts.append(f"  ▸ {activity}")
+        if location:
+            parts.append(f"  📍 {location}")
+        if mood:
+            parts.append(f"  💭 Mood: {mood}")
+        if note:
+            parts.append(f"  📝 {note}")
         lines.append("\n".join(parts))
         lines.append("─" * 36)
+    
     return "\n".join(lines)
 
-# ── Auth routes ────────────────────────────────────────────────────────────────
+# ── Routes ─────────────────────────────────────────────────────────────────────
+@app.route("/")
+def index():
+    if 'user_id' not in session:
+        return redirect(url_for('login_page'))
+    return render_template("index.html", username=session.get('username'))
+
+@app.route("/login", methods=["GET"])
+def login_page():
+    if 'user_id' in session:
+        return redirect(url_for('index'))
+    return render_template("auth.html")
+
 @app.route("/api/login", methods=["POST"])
 def api_login():
     data = request.get_json()
@@ -337,20 +372,12 @@ def api_signup():
     session['username'] = username
     return jsonify({"success": True, "username": username})
 
-@app.route("/api/logout", methods=["POST"])
+@app.route("/logout", methods=["POST"])
 def logout():
     session.clear()
     return jsonify({"success": True})
 
-@app.route("/api/me", methods=["GET"])
-def me():
-    """Frontend calls this on load to check if session is still valid."""
-    if 'user_id' not in session:
-        return jsonify({"authenticated": False}), 401
-    return jsonify({"authenticated": True, "username": session.get('username')})
-
-# ── Main ask route ─────────────────────────────────────────────────────────────
-@app.route("/api/ask", methods=["POST"])
+@app.route("/ask", methods=["POST"])
 @login_required
 def ask():
     data = request.get_json()
@@ -361,10 +388,13 @@ def ask():
     if not user_input:
         return jsonify({"response": "I didn't catch that. Could you try again?"})
 
+    # ── Delete memory ──────────────────────────────────────────────────
     if is_delete_memory_request(user_input):
         delete_user_history(user_id)
-        return jsonify({"response": "Memory wiped. I have forgotten everything. Starting fresh."})
+        response_text = "Memory wiped. I have forgotten everything. Starting fresh."
+        return jsonify({"response": response_text})
 
+    # ── Creator / special Q ────────────────────────────────────────────
     if is_creator_question(user_input) or is_fahim_question(user_input):
         response_text = "My boss is Fahim. He is the brilliant mind who created me."
         save_message(user_id, "user", user_input)
@@ -377,6 +407,7 @@ def ask():
         save_message(user_id, "assistant", response_text)
         return jsonify({"response": response_text})
 
+    # ── Timeline query ─────────────────────────────────────────────────
     if is_timeline_query(user_input):
         start_dt, end_dt, period_label = parse_timeline_query(user_input, now)
         rows = get_moments_in_range(user_id, start_dt, end_dt)
@@ -385,13 +416,20 @@ def ask():
         save_message(user_id, "assistant", timeline_text)
         return jsonify({"response": timeline_text, "is_timeline": True})
 
+    # ── Explicit log command ───────────────────────────────────────────
     if is_explicit_log(user_input):
-        log_text = user_input[4:].strip()
+        log_text = user_input[4:].strip() if user_input.lower().startswith("log:") else user_input[4:].strip()
         moment_data = extract_moment_from_text(log_text, now.strftime("%Y-%m-%d %H:%M"))
         if moment_data and moment_data.get("is_moment", True):
-            save_moment(user_id=user_id, timestamp=now,
-                activity=moment_data.get("activity"), location=moment_data.get("location"),
-                mood=moment_data.get("mood"), note=moment_data.get("note"), raw_text=log_text)
+            save_moment(
+                user_id=user_id,
+                timestamp=now,
+                activity=moment_data.get("activity"),
+                location=moment_data.get("location"),
+                mood=moment_data.get("mood"),
+                note=moment_data.get("note"),
+                raw_text=log_text
+            )
             parts = ["✅ Moment logged!"]
             if moment_data.get("activity"): parts.append(f"Activity: {moment_data['activity']}")
             if moment_data.get("location"): parts.append(f"Location: {moment_data['location']}")
@@ -404,16 +442,23 @@ def ask():
         save_message(user_id, "assistant", response_text)
         return jsonify({"response": response_text})
 
-    # Auto-detect moment
+    # ── Auto-detect moment from casual message ─────────────────────────
     moment_data = extract_moment_from_text(user_input, now.strftime("%Y-%m-%d %H:%M"))
     moment_logged = False
     if moment_data and moment_data.get("is_moment") is True:
         if moment_data.get("activity") or moment_data.get("location"):
-            save_moment(user_id=user_id, timestamp=now,
-                activity=moment_data.get("activity"), location=moment_data.get("location"),
-                mood=moment_data.get("mood"), note=moment_data.get("note"), raw_text=user_input)
+            save_moment(
+                user_id=user_id,
+                timestamp=now,
+                activity=moment_data.get("activity"),
+                location=moment_data.get("location"),
+                mood=moment_data.get("mood"),
+                note=moment_data.get("note"),
+                raw_text=user_input
+            )
             moment_logged = True
 
+    # ── Normal AI response ─────────────────────────────────────────────
     save_message(user_id, "user", user_input)
     history = get_user_history(user_id)
     username = session.get('username', 'sir')
@@ -424,10 +469,11 @@ def ask():
             messages=[
                 {"role": "system", "content": (
                     f"You are Jarvis, a sleek and helpful AI assistant. "
-                    f"The user's name is {username}. Address them by name occasionally. "
+                    f"The user's name is {username}. Address them by name occasionally to make it personal. "
                     f"Be concise, witty, and professional. "
-                    f"You have a permanent memory of all past conversations with this user."
-                    + (f" Note: I just automatically logged this moment." if moment_logged else "")
+                    f"You have a permanent memory of all past conversations with this user. "
+                    f"Use this context to give personalized, informed responses."
+                    + (f" Note: I just automatically logged this moment from the user's message." if moment_logged else "")
                 )},
                 *history
             ]
@@ -442,10 +488,16 @@ def ask():
 
     return jsonify({"response": response_text, "moment_logged": moment_logged})
 
-# ── Moments routes ─────────────────────────────────────────────────────────────
-@app.route("/api/moments", methods=["GET"])
+@app.route("/reset", methods=["POST"])
+@login_required
+def reset():
+    delete_user_history(session['user_id'])
+    return jsonify({"status": "ok", "message": "Memory cleared."})
+
+@app.route("/moments", methods=["GET"])
 @login_required
 def get_moments():
+    """Return all moments for the logged-in user as JSON (for the timeline panel)."""
     user_id = session['user_id']
     rows = get_all_moments(user_id, limit=200)
     moments = []
@@ -456,22 +508,24 @@ def get_moments():
             date_str = dt.strftime("%b %d, %Y")
             time_str = dt.strftime("%I:%M %p")
         except:
-            date_str = ts; time_str = ""
-        moments.append({"timestamp": ts, "date": date_str, "time": time_str,
-                         "activity": activity, "location": location, "mood": mood, "note": note})
+            date_str = ts
+            time_str = ""
+        moments.append({
+            "timestamp": ts,
+            "date": date_str,
+            "time": time_str,
+            "activity": activity,
+            "location": location,
+            "mood": mood,
+            "note": note
+        })
     return jsonify({"moments": moments})
 
-@app.route("/api/moments/clear", methods=["POST"])
+@app.route("/moments/clear", methods=["POST"])
 @login_required
 def clear_moments():
     delete_all_moments(session['user_id'])
     return jsonify({"status": "ok"})
-
-@app.route("/api/reset", methods=["POST"])
-@login_required
-def reset():
-    delete_user_history(session['user_id'])
-    return jsonify({"status": "ok", "message": "Memory cleared."})
 
 if __name__ == "__main__":
     app.run(debug=True)
