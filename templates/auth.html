@@ -7,54 +7,29 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg: #020c14;
-      --panel: #040f1a;
-      --cyan: #00e5ff;
-      --cyan-dim: #00b8d4;
-      --amber: #ffab00;
-      --red: #ff1744;
-      --green: #00e676;
+      --bg: #020c14; --panel: #040f1a; --cyan: #00e5ff; --cyan-dim: #00b8d4;
+      --amber: #ffab00; --red: #ff1744; --green: #00e676;
       --glow: 0 0 20px #00e5ff88, 0 0 60px #00e5ff33;
     }
-
     body {
-      background: var(--bg);
-      color: var(--cyan);
-      font-family: 'Orbitron', sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
+      background: var(--bg); color: var(--cyan); font-family: 'Orbitron', sans-serif;
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; overflow: hidden;
     }
-
     body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background: repeating-linear-gradient(
-        0deg, transparent, transparent 2px,
-        rgba(0,229,255,0.015) 2px, rgba(0,229,255,0.015) 4px
-      );
-      pointer-events: none;
-      z-index: 100;
+      content: ''; position: fixed; inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,229,255,0.015) 2px, rgba(0,229,255,0.015) 4px);
+      pointer-events: none; z-index: 100;
     }
-
     body::after {
-      content: '';
-      position: fixed;
-      inset: 0;
+      content: ''; position: fixed; inset: 0;
       background: radial-gradient(ellipse at 50% 40%, #001f3344 0%, transparent 70%);
       pointer-events: none;
     }
-
     .hud-frame { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
     .hud-frame::before, .hud-frame::after {
-      content: ''; position: absolute;
-      width: 60px; height: 60px;
+      content: ''; position: absolute; width: 60px; height: 60px;
       border-color: var(--cyan); border-style: solid; opacity: 0.4;
     }
     .hud-frame::before { top: 16px; left: 16px; border-width: 2px 0 0 2px; }
@@ -62,337 +37,133 @@
     .corner { position: fixed; width: 60px; height: 60px; opacity: 0.4; pointer-events: none; z-index: 50; }
     .corner--tr { top: 16px; right: 16px; border-top: 2px solid var(--cyan); border-right: 2px solid var(--cyan); }
     .corner--bl { bottom: 16px; left: 16px; border-bottom: 2px solid var(--cyan); border-left: 2px solid var(--cyan); }
-
-    /* Floating particles */
     .particles { position: fixed; inset: 0; pointer-events: none; z-index: 1; }
     .particle {
-      position: absolute;
-      width: 2px; height: 2px;
-      background: var(--cyan);
-      border-radius: 50%;
-      opacity: 0;
-      animation: float-particle linear infinite;
+      position: absolute; width: 2px; height: 2px; background: var(--cyan);
+      border-radius: 50%; opacity: 0; animation: float-particle linear infinite;
     }
-
     @keyframes float-particle {
       0% { transform: translateY(100vh) translateX(0); opacity: 0; }
-      10% { opacity: 0.6; }
-      90% { opacity: 0.3; }
+      10% { opacity: 0.6; } 90% { opacity: 0.3; }
       100% { transform: translateY(-10vh) translateX(30px); opacity: 0; }
     }
-
     .container {
-      position: relative;
-      z-index: 10;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 32px;
-      width: 100%;
-      max-width: 420px;
-      padding: 24px;
-      animation: fade-in 0.6s ease-out;
+      position: relative; z-index: 10; display: flex; flex-direction: column;
+      align-items: center; gap: 32px; width: 100%; max-width: 420px;
+      padding: 24px; animation: fade-in 0.6s ease-out;
     }
-
-    @keyframes fade-in {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
+    @keyframes fade-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     .title-block { text-align: center; }
     .title-block h1 {
-      font-size: clamp(2.5rem, 8vw, 4rem);
-      font-weight: 900;
-      letter-spacing: 0.35em;
-      text-shadow: var(--glow);
-      animation: pulse-text 3s ease-in-out infinite;
+      font-size: clamp(2.5rem, 8vw, 4rem); font-weight: 900;
+      letter-spacing: 0.35em; text-shadow: var(--glow); animation: pulse-text 3s ease-in-out infinite;
     }
     .title-block .sub {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 0.6rem;
-      letter-spacing: 0.25em;
-      opacity: 0.45;
-      margin-top: 6px;
+      font-family: 'Share Tech Mono', monospace; font-size: 0.6rem;
+      letter-spacing: 0.25em; opacity: 0.45; margin-top: 6px;
     }
     @keyframes pulse-text {
       0%, 100% { text-shadow: var(--glow); }
       50% { text-shadow: 0 0 40px #00e5ffbb, 0 0 80px #00e5ff55; }
     }
-
-    /* Auth Card */
     .auth-card {
-      width: 100%;
-      background: rgba(0, 20, 30, 0.75);
-      border: 1px solid rgba(0,229,255,0.2);
-      border-radius: 4px;
-      padding: 32px 28px;
-      position: relative;
-      backdrop-filter: blur(10px);
+      width: 100%; background: rgba(0,20,30,0.75); border: 1px solid rgba(0,229,255,0.2);
+      border-radius: 4px; padding: 32px 28px; position: relative; backdrop-filter: blur(10px);
     }
     .auth-card::before {
-      content: attr(data-mode);
-      position: absolute;
-      top: -10px; left: 20px;
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 0.6rem;
-      letter-spacing: 0.2em;
-      color: var(--cyan);
-      background: var(--bg);
-      padding: 0 10px;
-      opacity: 0.6;
+      content: attr(data-mode); position: absolute; top: -10px; left: 20px;
+      font-family: 'Share Tech Mono', monospace; font-size: 0.6rem; letter-spacing: 0.2em;
+      color: var(--cyan); background: var(--bg); padding: 0 10px; opacity: 0.6;
     }
-
-    /* Tabs */
-    .tabs {
-      display: flex;
-      gap: 0;
-      margin-bottom: 28px;
-      border: 1px solid rgba(0,229,255,0.2);
-      border-radius: 3px;
-      overflow: hidden;
-    }
+    .tabs { display: flex; gap: 0; margin-bottom: 28px; border: 1px solid rgba(0,229,255,0.2); border-radius: 3px; overflow: hidden; }
     .tab {
-      flex: 1;
-      padding: 10px;
-      background: transparent;
-      border: none;
-      color: rgba(0,229,255,0.4);
-      font-family: 'Orbitron', sans-serif;
-      font-size: 0.65rem;
-      font-weight: 700;
-      letter-spacing: 0.15em;
-      cursor: pointer;
-      transition: all 0.2s;
+      flex: 1; padding: 10px; background: transparent; border: none;
+      color: rgba(0,229,255,0.4); font-family: 'Orbitron', sans-serif;
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.15em; cursor: pointer; transition: all 0.2s;
     }
     .tab:first-child { border-right: 1px solid rgba(0,229,255,0.2); }
-    .tab.active {
-      background: rgba(0,229,255,0.1);
-      color: var(--cyan);
-      text-shadow: 0 0 10px var(--cyan);
-    }
+    .tab.active { background: rgba(0,229,255,0.1); color: var(--cyan); text-shadow: 0 0 10px var(--cyan); }
     .tab:hover:not(.active) { color: rgba(0,229,255,0.7); background: rgba(0,229,255,0.03); }
-
-    /* Form */
-    .form-group {
-      margin-bottom: 18px;
-    }
-    .form-label {
-      display: block;
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 0.6rem;
-      letter-spacing: 0.2em;
-      opacity: 0.5;
-      margin-bottom: 6px;
-    }
+    .form-group { margin-bottom: 18px; }
+    .form-label { display: block; font-family: 'Share Tech Mono', monospace; font-size: 0.6rem; letter-spacing: 0.2em; opacity: 0.5; margin-bottom: 6px; }
     .form-input {
-      width: 100%;
-      background: rgba(0,10,20,0.8);
-      border: 1px solid rgba(0,229,255,0.2);
-      border-radius: 3px;
-      color: var(--cyan);
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 0.85rem;
-      padding: 12px 14px;
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-      letter-spacing: 0.05em;
+      width: 100%; background: rgba(0,10,20,0.8); border: 1px solid rgba(0,229,255,0.2);
+      border-radius: 3px; color: var(--cyan); font-family: 'Share Tech Mono', monospace;
+      font-size: 0.85rem; padding: 12px 14px; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s; letter-spacing: 0.05em;
     }
     .form-input::placeholder { color: rgba(0,229,255,0.2); }
-    .form-input:focus {
-      border-color: rgba(0,229,255,0.55);
-      box-shadow: 0 0 14px rgba(0,229,255,0.12);
-    }
-
+    .form-input:focus { border-color: rgba(0,229,255,0.55); box-shadow: 0 0 14px rgba(0,229,255,0.12); }
     .btn-primary {
-      width: 100%;
-      padding: 14px;
-      background: rgba(0,229,255,0.1);
-      border: 1px solid rgba(0,229,255,0.4);
-      border-radius: 3px;
-      color: var(--cyan);
-      font-family: 'Orbitron', sans-serif;
-      font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 0.2em;
-      cursor: pointer;
-      transition: all 0.2s;
-      margin-top: 8px;
-      position: relative;
-      overflow: hidden;
+      width: 100%; padding: 14px; background: rgba(0,229,255,0.1);
+      border: 1px solid rgba(0,229,255,0.4); border-radius: 3px; color: var(--cyan);
+      font-family: 'Orbitron', sans-serif; font-size: 0.7rem; font-weight: 700;
+      letter-spacing: 0.2em; cursor: pointer; transition: all 0.2s; margin-top: 8px;
+      position: relative; overflow: hidden;
     }
-    .btn-primary:hover {
-      background: rgba(0,229,255,0.18);
-      box-shadow: 0 0 20px rgba(0,229,255,0.25);
-      border-color: var(--cyan);
-    }
+    .btn-primary:hover { background: rgba(0,229,255,0.18); box-shadow: 0 0 20px rgba(0,229,255,0.25); border-color: var(--cyan); }
     .btn-primary:active { transform: scale(0.98); }
-    .btn-primary:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
-    /* Loading shimmer on button */
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
     .btn-primary.loading::after {
-      content: '';
-      position: absolute;
-      top: 0; left: -100%;
-      width: 60%;
-      height: 100%;
+      content: ''; position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
       background: linear-gradient(90deg, transparent, rgba(0,229,255,0.2), transparent);
       animation: shimmer 1s ease-in-out infinite;
     }
-    @keyframes shimmer {
-      0% { left: -60%; }
-      100% { left: 140%; }
-    }
-
-    /* Error / Success message */
-    .alert {
-      padding: 10px 14px;
-      border-radius: 3px;
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 0.7rem;
-      letter-spacing: 0.08em;
-      margin-bottom: 16px;
-      display: none;
-    }
+    @keyframes shimmer { 0% { left: -60%; } 100% { left: 140%; } }
+    .alert { padding: 10px 14px; border-radius: 3px; font-family: 'Share Tech Mono', monospace; font-size: 0.7rem; letter-spacing: 0.08em; margin-bottom: 16px; display: none; }
     .alert.show { display: block; animation: msg-in 0.25s ease-out; }
-    .alert.error {
-      background: rgba(255,23,68,0.1);
-      border: 1px solid rgba(255,23,68,0.35);
-      color: var(--red);
-    }
-    .alert.success {
-      background: rgba(0,230,118,0.1);
-      border: 1px solid rgba(0,230,118,0.35);
-      color: var(--green);
-    }
-    @keyframes msg-in {
-      from { opacity: 0; transform: translateY(-4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .status-bar {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 0.65rem;
-      letter-spacing: 0.2em;
-      opacity: 0.45;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .status-dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--cyan); box-shadow: 0 0 8px var(--cyan);
-      animation: blink 1.5s step-end infinite;
-    }
+    .alert.error { background: rgba(255,23,68,0.1); border: 1px solid rgba(255,23,68,0.35); color: var(--red); }
+    .alert.success { background: rgba(0,230,118,0.1); border: 1px solid rgba(0,230,118,0.35); color: var(--green); }
+    @keyframes msg-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+    .status-bar { font-family: 'Share Tech Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em; opacity: 0.45; display: flex; align-items: center; gap: 10px; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 8px var(--cyan); animation: blink 1.5s step-end infinite; }
     @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-
-    /* Eye decorations on card */
-    .eye-deco {
-      display: flex;
-      justify-content: center;
-      gap: 30px;
-      margin-bottom: 24px;
-      opacity: 0.7;
-    }
-    .eye-small {
-      width: 60px; height: 32px;
-      border: 1.5px solid var(--cyan);
-      border-radius: 8px;
-      position: relative;
-      overflow: hidden;
-      background: rgba(0,20,30,0.9);
-      box-shadow: 0 0 10px #00e5ff44;
-    }
-    .eye-small::after {
-      content: '';
-      position: absolute;
-      top: 0; left: -100%; width: 40%; height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(0,229,255,0.15), transparent);
-      animation: eye-scan 3s linear infinite;
-    }
-    .eye-small .dot {
-      width: 14px; height: 14px; border-radius: 50%;
-      background: var(--cyan);
-      box-shadow: 0 0 8px var(--cyan);
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      animation: eye-idle 4s ease-in-out infinite;
-    }
+    .eye-deco { display: flex; justify-content: center; gap: 30px; margin-bottom: 24px; opacity: 0.7; }
+    .eye-small { width: 60px; height: 32px; border: 1.5px solid var(--cyan); border-radius: 8px; position: relative; overflow: hidden; background: rgba(0,20,30,0.9); box-shadow: 0 0 10px #00e5ff44; }
+    .eye-small::after { content: ''; position: absolute; top: 0; left: -100%; width: 40%; height: 100%; background: linear-gradient(90deg, transparent, rgba(0,229,255,0.15), transparent); animation: eye-scan 3s linear infinite; }
+    .eye-small .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 8px var(--cyan); position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); animation: eye-idle 4s ease-in-out infinite; }
     @keyframes eye-scan { 0% { left: -40%; } 100% { left: 140%; } }
-    @keyframes eye-idle {
-      0%, 100% { transform: translate(-50%, -50%); }
-      25% { transform: translate(calc(-50% + 10px), -50%); }
-      75% { transform: translate(calc(-50% - 10px), -50%); }
-    }
+    @keyframes eye-idle { 0%,100% { transform: translate(-50%,-50%); } 25% { transform: translate(calc(-50% + 10px),-50%); } 75% { transform: translate(calc(-50% - 10px),-50%); } }
   </style>
 </head>
 <body>
   <div class="hud-frame"></div>
   <div class="corner corner--tr"></div>
   <div class="corner corner--bl"></div>
-
-  <!-- Floating particles -->
   <div class="particles" id="particles"></div>
-
   <div class="container">
     <div class="title-block">
       <h1>JARVIS</h1>
       <p class="sub">JUST A RATHER VERY INTELLIGENT SYSTEM</p>
     </div>
-
-    <div class="status-bar">
-      <div class="status-dot"></div>
-      <span>IDENTITY VERIFICATION REQUIRED</span>
-    </div>
-
+    <div class="status-bar"><div class="status-dot"></div><span>IDENTITY VERIFICATION REQUIRED</span></div>
     <div class="auth-card" id="auth-card" data-mode="ACCESS CONTROL">
       <div class="eye-deco">
         <div class="eye-small"><div class="dot"></div></div>
         <div class="eye-small"><div class="dot"></div></div>
       </div>
-
       <div class="tabs">
         <button class="tab active" id="tab-login" onclick="switchTab('login')">LOGIN</button>
         <button class="tab" id="tab-signup" onclick="switchTab('signup')">SIGN UP</button>
       </div>
-
       <div id="alert-box" class="alert"></div>
-
-      <!-- LOGIN FORM -->
       <div id="form-login">
-        <div class="form-group">
-          <label class="form-label">IDENTIFIER</label>
-          <input type="text" class="form-input" id="login-username" placeholder="Enter username" autocomplete="username" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">SECURITY KEY</label>
-          <input type="password" class="form-input" id="login-password" placeholder="Enter password" autocomplete="current-password" />
-        </div>
+        <div class="form-group"><label class="form-label">IDENTIFIER</label><input type="text" class="form-input" id="login-username" placeholder="Enter username" autocomplete="username" /></div>
+        <div class="form-group"><label class="form-label">SECURITY KEY</label><input type="password" class="form-input" id="login-password" placeholder="Enter password" autocomplete="current-password" /></div>
         <button class="btn-primary" id="login-btn" onclick="doLogin()">AUTHENTICATE</button>
       </div>
-
-      <!-- SIGNUP FORM -->
       <div id="form-signup" style="display:none;">
-        <div class="form-group">
-          <label class="form-label">CHOOSE IDENTIFIER</label>
-          <input type="text" class="form-input" id="signup-username" placeholder="Choose a username (min 3 chars)" autocomplete="username" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">SET SECURITY KEY</label>
-          <input type="password" class="form-input" id="signup-password" placeholder="Choose a password (min 6 chars)" autocomplete="new-password" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">CONFIRM SECURITY KEY</label>
-          <input type="password" class="form-input" id="signup-confirm" placeholder="Confirm password" autocomplete="new-password" />
-        </div>
+        <div class="form-group"><label class="form-label">CHOOSE IDENTIFIER</label><input type="text" class="form-input" id="signup-username" placeholder="Choose a username (min 3 chars)" autocomplete="username" /></div>
+        <div class="form-group"><label class="form-label">SET SECURITY KEY</label><input type="password" class="form-input" id="signup-password" placeholder="Choose a password (min 6 chars)" autocomplete="new-password" /></div>
+        <div class="form-group"><label class="form-label">CONFIRM SECURITY KEY</label><input type="password" class="form-input" id="signup-confirm" placeholder="Confirm password" autocomplete="new-password" /></div>
         <button class="btn-primary" id="signup-btn" onclick="doSignup()">CREATE ACCOUNT</button>
       </div>
     </div>
   </div>
-
   <script>
+    // ── CONFIG: set your Render backend URL here ──────────────────────
+    const BACKEND = "https://your-jarvis-backend.onrender.com"; // ← CHANGE THIS
+
     // Particles
     const container = document.getElementById('particles');
     for (let i = 0; i < 25; i++) {
@@ -405,6 +176,11 @@
       container.appendChild(p);
     }
 
+    // Redirect if already logged in
+    fetch(`${BACKEND}/api/me`, { credentials: 'include' })
+      .then(r => r.json()).then(d => { if (d.authenticated) window.location.href = 'index.html'; })
+      .catch(() => {});
+
     function switchTab(tab) {
       document.getElementById('tab-login').classList.toggle('active', tab === 'login');
       document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
@@ -413,21 +189,14 @@
       document.getElementById('auth-card').dataset.mode = tab === 'login' ? 'ACCESS CONTROL' : 'NEW UNIT REGISTRATION';
       hideAlert();
     }
-
     function showAlert(msg, type = 'error') {
       const el = document.getElementById('alert-box');
-      el.textContent = msg;
-      el.className = `alert ${type} show`;
+      el.textContent = msg; el.className = `alert ${type} show`;
     }
-
-    function hideAlert() {
-      document.getElementById('alert-box').className = 'alert';
-    }
-
+    function hideAlert() { document.getElementById('alert-box').className = 'alert'; }
     function setLoading(btnId, loading) {
       const btn = document.getElementById(btnId);
-      btn.disabled = loading;
-      btn.classList.toggle('loading', loading);
+      btn.disabled = loading; btn.classList.toggle('loading', loading);
       if (loading) btn.textContent = 'PROCESSING...';
       else btn.textContent = btnId === 'login-btn' ? 'AUTHENTICATE' : 'CREATE ACCOUNT';
     }
@@ -436,27 +205,22 @@
       const username = document.getElementById('login-username').value.trim();
       const password = document.getElementById('login-password').value;
       if (!username || !password) { showAlert('⚠ ALL FIELDS REQUIRED'); return; }
-
-      setLoading('login-btn', true);
-      hideAlert();
+      setLoading('login-btn', true); hideAlert();
       try {
-        const res = await fetch('/api/login', {
-          method: 'POST',
+        const res = await fetch(`${BACKEND}/api/login`, {
+          method: 'POST', credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password })
         });
         const data = await res.json();
         if (data.success) {
+          localStorage.setItem('jarvis_username', data.username);
           showAlert(`✓ IDENTITY CONFIRMED. WELCOME, ${data.username.toUpperCase()}.`, 'success');
-          setTimeout(() => { window.location.href = '/'; }, 800);
+          setTimeout(() => { window.location.href = 'index.html'; }, 800);
         } else {
-          showAlert('✗ ' + data.error);
-          setLoading('login-btn', false);
+          showAlert('✗ ' + data.error); setLoading('login-btn', false);
         }
-      } catch (e) {
-        showAlert('✗ CONNECTION ERROR. RETRY.');
-        setLoading('login-btn', false);
-      }
+      } catch (e) { showAlert('✗ CONNECTION ERROR. RETRY.'); setLoading('login-btn', false); }
     }
 
     async function doSignup() {
@@ -465,35 +229,28 @@
       const confirm = document.getElementById('signup-confirm').value;
       if (!username || !password || !confirm) { showAlert('⚠ ALL FIELDS REQUIRED'); return; }
       if (password !== confirm) { showAlert('✗ SECURITY KEYS DO NOT MATCH'); return; }
-
-      setLoading('signup-btn', true);
-      hideAlert();
+      setLoading('signup-btn', true); hideAlert();
       try {
-        const res = await fetch('/api/signup', {
-          method: 'POST',
+        const res = await fetch(`${BACKEND}/api/signup`, {
+          method: 'POST', credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password })
         });
         const data = await res.json();
         if (data.success) {
+          localStorage.setItem('jarvis_username', data.username);
           showAlert(`✓ UNIT REGISTERED. WELCOME, ${data.username.toUpperCase()}.`, 'success');
-          setTimeout(() => { window.location.href = '/'; }, 800);
+          setTimeout(() => { window.location.href = 'index.html'; }, 800);
         } else {
-          showAlert('✗ ' + data.error);
-          setLoading('signup-btn', false);
+          showAlert('✗ ' + data.error); setLoading('signup-btn', false);
         }
-      } catch (e) {
-        showAlert('✗ CONNECTION ERROR. RETRY.');
-        setLoading('signup-btn', false);
-      }
+      } catch (e) { showAlert('✗ CONNECTION ERROR. RETRY.'); setLoading('signup-btn', false); }
     }
 
-    // Enter key support
     document.addEventListener('keydown', e => {
       if (e.key === 'Enter') {
         const loginVisible = document.getElementById('form-login').style.display !== 'none';
-        if (loginVisible) doLogin();
-        else doSignup();
+        if (loginVisible) doLogin(); else doSignup();
       }
     });
   </script>
