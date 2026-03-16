@@ -3,7 +3,7 @@ from flask_cors import CORS
 from groq import Groq
 from dotenv import load_dotenv
 import os
-import sqlite3
+import psycopg2
 import json
 import re
 from datetime import datetime, timedelta
@@ -29,41 +29,42 @@ def root():
 def static_files(filename):
     return send_from_directory('static', filename)
 
-# ── Database setup ─────────────────────────────────────────────────────────────
-DB_PATH = "jarvis_memory.db"
+# ── Database setup (PostgreSQL) ────────────────────────────────────────────────
+def get_conn():
+    return psycopg2.connect(os.getenv("DATABASE_URL"), sslmode='require')
 
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_conn()
     c = conn.cursor()
     c.execute('''
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             username TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
     c.execute('''
         CREATE TABLE IF NOT EXISTS conversations (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             user_id INTEGER NOT NULL,
             role TEXT NOT NULL,
             content TEXT NOT NULL,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id)
         )
     ''')
     c.execute('''
         CREATE TABLE IF NOT EXISTS moments (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             user_id INTEGER NOT NULL,
-            timestamp DATETIME NOT NULL,
+            timestamp TIMESTAMP NOT NULL,
             activity TEXT,
             location TEXT,
             mood TEXT,
             note TEXT,
             raw_text TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id)
         )
     ''')
@@ -71,76 +72,76 @@ def init_db():
     conn.close()
 
 def save_message(user_id, role, content):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_conn()
     c = conn.cursor()
-    c.execute("INSERT INTO conversations (user_id, role, content) VALUES (?, ?, ?)", (user_id, role, content))
+    c.execute("INSERT INTO conversations (user_id, role, content) VALUES (%s, %s, %s)", (user_id, role, content))
     conn.commit()
     conn.close()
 
 def get_user_history(user_id):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT role, content FROM conversations WHERE user_id = ? ORDER BY id ASC", (user_id,))
+    c.execute("SELECT role, content FROM conversations WHERE user_id = %s ORDER BY id ASC", (user_id,))
     rows = c.fetchall()
     conn.close()
     return [{"role": row[0], "content": row[1]} for row in rows]
 
 def delete_user_history(user_id):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_conn()
     c = conn.cursor()
-    c.execute("DELETE FROM conversations WHERE user_id = ?", (user_id,))
+    c.execute("DELETE FROM conversations WHERE user_id = %s", (user_id,))
     conn.commit()
     conn.close()
 
 def get_user_by_username(username):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT id, username, password_hash FROM users WHERE username = ?", (username,))
+    c.execute("SELECT id, username, password_hash FROM users WHERE username = %s", (username,))
     row = c.fetchone()
     conn.close()
     return row
 
 def create_user(username, password):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_conn()
     c = conn.cursor()
     try:
         password_hash = generate_password_hash(password)
-        c.execute("INSERT INTO users (username, password_hash) VALUES (?, ?)", (username, password_hash))
+        c.execute("INSERT INTO users (username, password_hash) VALUES (%s, %s) RETURNING id", (username, password_hash))
+        user_id = c.fetchone()[0]
         conn.commit()
-        user_id = c.lastrowid
         conn.close()
         return user_id, None
-    except sqlite3.IntegrityError:
+    except psycopg2.IntegrityError:
         conn.close()
         return None, "Username already exists."
 
 # ── Moments DB helpers ─────────────────────────────────────────────────────────
 def save_moment(user_id, timestamp, activity=None, location=None, mood=None, note=None, raw_text=None):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_conn()
     c = conn.cursor()
     c.execute(
-        "INSERT INTO moments (user_id, timestamp, activity, location, mood, note, raw_text) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO moments (user_id, timestamp, activity, location, mood, note, raw_text) VALUES (%s, %s, %s, %s, %s, %s, %s)",
         (user_id, timestamp, activity, location, mood, note, raw_text)
     )
     conn.commit()
     conn.close()
 
 def get_moments_in_range(user_id, start_dt, end_dt):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_conn()
     c = conn.cursor()
     c.execute(
-        "SELECT timestamp, activity, location, mood, note FROM moments WHERE user_id = ? AND timestamp BETWEEN ? AND ? ORDER BY timestamp ASC",
-        (user_id, start_dt.isoformat(), end_dt.isoformat())
+        "SELECT timestamp, activity, location, mood, note FROM moments WHERE user_id = %s AND timestamp BETWEEN %s AND %s ORDER BY timestamp ASC",
+        (user_id, start_dt, end_dt)
     )
     rows = c.fetchall()
     conn.close()
     return rows
 
 def get_all_moments(user_id, limit=200):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_conn()
     c = conn.cursor()
     c.execute(
-        "SELECT timestamp, activity, location, mood, note FROM moments WHERE user_id = ? ORDER BY timestamp DESC LIMIT ?",
+        "SELECT timestamp, activity, location, mood, note FROM moments WHERE user_id = %s ORDER BY timestamp DESC LIMIT %s",
         (user_id, limit)
     )
     rows = c.fetchall()
@@ -148,9 +149,9 @@ def get_all_moments(user_id, limit=200):
     return rows
 
 def delete_all_moments(user_id):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_conn()
     c = conn.cursor()
-    c.execute("DELETE FROM moments WHERE user_id = ?", (user_id,))
+    c.execute("DELETE FROM moments WHERE user_id = %s", (user_id,))
     conn.commit()
     conn.close()
 
@@ -297,10 +298,10 @@ def format_moments_timeline(rows, period_label):
     for row in rows:
         ts, activity, location, mood, note = row
         try:
-            dt = datetime.fromisoformat(ts)
+            dt = datetime.fromisoformat(str(ts))
             time_str = dt.strftime("%I:%M %p")
         except:
-            time_str = ts
+            time_str = str(ts)
         parts = [f"🕐 {time_str}"]
         if activity: parts.append(f"  ▸ {activity}")
         if location: parts.append(f"  📍 {location}")
@@ -459,12 +460,12 @@ def get_moments():
     for row in rows:
         ts, activity, location, mood, note = row
         try:
-            dt = datetime.fromisoformat(ts)
+            dt = datetime.fromisoformat(str(ts))
             date_str = dt.strftime("%b %d, %Y")
             time_str = dt.strftime("%I:%M %p")
         except:
-            date_str = ts; time_str = ""
-        moments.append({"timestamp": ts, "date": date_str, "time": time_str,
+            date_str = str(ts); time_str = ""
+        moments.append({"timestamp": str(ts), "date": date_str, "time": time_str,
                          "activity": activity, "location": location, "mood": mood, "note": note})
     return jsonify({"moments": moments})
 

@@ -236,8 +236,8 @@
   </div>
 
   <script>
-    // ── CONFIG ────────────────────────────────────────────────────────
-    const BACKEND = "https://skjarvisb.onrender.com"; // ← CHANGE THIS
+    // ── Same domain on Vercel — no separate backend URL needed ────────
+    const BACKEND = "";
 
     // ── Auth check on load ────────────────────────────────────────────
     let USERNAME = localStorage.getItem('jarvis_username') || '';
@@ -252,7 +252,6 @@
         localStorage.setItem('jarvis_username', USERNAME);
         document.getElementById('display-username').textContent = USERNAME.toUpperCase();
       } catch (e) {
-        // If backend unreachable, still show cached username
         document.getElementById('display-username').textContent = USERNAME.toUpperCase() || '—';
       }
     }
