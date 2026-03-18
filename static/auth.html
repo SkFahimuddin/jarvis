@@ -124,6 +124,21 @@
     .eye-small .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 8px var(--cyan); position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); animation: eye-idle 4s ease-in-out infinite; }
     @keyframes eye-scan { 0% { left: -40%; } 100% { left: 140%; } }
     @keyframes eye-idle { 0%,100% { transform: translate(-50%,-50%); } 25% { transform: translate(calc(-50% + 10px),-50%); } 75% { transform: translate(calc(-50% - 10px),-50%); } }
+
+    /* ── Fahim Industries Footer ── */
+    .fi-footer {
+      position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%);
+      font-family: 'Share Tech Mono', monospace; font-size: 0.52rem;
+      letter-spacing: 0.4em; color: rgba(0,229,255,0.2);
+      z-index: 200; pointer-events: none; white-space: nowrap;
+      text-transform: uppercase; animation: footer-pulse 4s ease-in-out infinite;
+    }
+    .fi-footer::before { content: '◈  '; }
+    .fi-footer::after  { content: '  ◈'; }
+    @keyframes footer-pulse {
+      0%, 100% { color: rgba(0,229,255,0.2); }
+      50% { color: rgba(0,229,255,0.38); }
+    }
   </style>
 </head>
 <body>
@@ -160,6 +175,10 @@
       </div>
     </div>
   </div>
+
+  <!-- Fahim Industries Footer -->
+  <div class="fi-footer">Fahim Industries</div>
+
   <script>
     // ── Same domain on Vercel — no separate backend URL needed ────────
     const BACKEND = "";
