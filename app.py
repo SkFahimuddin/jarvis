@@ -189,15 +189,6 @@ def is_fahim_question(user_input):
     ]
     return any(phrase in user_input.lower() for phrase in fahim_phrases)
 
-def is_jasmine_question(user_input):
-    jasmine_phrases = [
-        "who is jasmine", "do you know who jasmine is", "can you tell me who jasmine is",
-        "what does jasmine do", "who is this jasmine", "who exactly is jasmine",
-        "could you explain who jasmine is", "tell me about jasmine",
-        "any idea who jasmine is", "who's jasmine"
-    ]
-    return any(phrase in user_input.lower() for phrase in jasmine_phrases)
-
 def is_delete_memory_request(user_input):
     delete_phrases = [
         "delete your memory", "clear your memory", "forget everything",
@@ -375,12 +366,6 @@ def ask():
 
     if is_creator_question(user_input) or is_fahim_question(user_input):
         response_text = "My boss is Fahim. He is the brilliant mind who created me."
-        save_message(user_id, "user", user_input)
-        save_message(user_id, "assistant", response_text)
-        return jsonify({"response": response_text})
-
-    if is_jasmine_question(user_input):
-        response_text = "Jasmine is a Farishta — an angel — who walked into my boss's life exactly when he needed one most."
         save_message(user_id, "user", user_input)
         save_message(user_id, "assistant", response_text)
         return jsonify({"response": response_text})
